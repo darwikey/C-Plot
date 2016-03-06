@@ -1,0 +1,9 @@
+Debug
+Release
+.vs
+x64
+*.sdf
+*.VC.opendb
+
+Drawer/Debug
+Drawer/Release
