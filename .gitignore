@@ -1,5 +1,4 @@
 Debug
-Release
 .vs
 x64
 *.sdf
@@ -7,3 +6,7 @@ x64
 
 Drawer/Debug
 Drawer/Release
+
+Release/*.iobj
+Release/*.ipdb
+Release/*.pdb
