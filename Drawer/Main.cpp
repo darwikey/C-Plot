@@ -46,23 +46,61 @@ void loadWidgets(tgui::Gui& gui)
 	auto windowHeight = tgui::bindHeight(gui);
 
 
-	// Create the code edit box
-	tgui::TextBox::Ptr editBox = theme->load("TextBox");
-	editBox->setSize(windowWidth * 0.25, windowHeight - 200);
-	editBox->setPosition(10, 30);
-	editBox->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
-	gui.add(editBox, "Code");
+	// Create the username edit box
+	tgui::TextBox::Ptr editBoxUsername = theme->load("TextBox");
+	editBoxUsername->setSize(windowWidth * 0.25, windowHeight - 200);
+	editBoxUsername->setPosition(10, 30);
+	editBoxUsername->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
+	gui.add(editBoxUsername, "Code");
 
 
-	// Create the launch button
+	// Create the login button
 	tgui::Button::Ptr button = theme->load("Button");
-	button->setSize(windowWidth * 0.25, 50);
+	button->setSize(windowWidth / 3, 50);
 	button->setPosition(10, windowHeight -150);
 	button->setText("Launch");
 	gui.add(button);
 
 	// Call the login function when the button is pressed
-	button->connect("pressed", launch, editBox);
+	button->connect("pressed", launch, editBoxUsername);
+}
+
+std::vector<float> computeAxisGraduation(float min, float max)
+{
+	float delta = max - min;
+	const static double mul[] = { 1.0, 2.0, 5.0 };
+	std::vector<float> axis;
+
+	bool ok = false;
+	float step = FLT_MAX;
+	for (int e = -7; e < 9; e++)
+	{
+		double a = pow(10.0, e);
+
+		for (int i = 0; i < 3; i++)
+		{
+			double b = a * mul[i];
+
+			if (delta / b <= 10)
+			{
+				step = b;
+				ok = true;
+				break;
+			}
+		}
+		if (ok)
+		{
+			break;
+		}
+	}
+
+	float i = floor(min / step) * step;
+	for (; i < max+0.1f*step; i += step)
+	{
+		axis.push_back(i);
+	}
+
+	return axis;
 }
 
 int main()
@@ -122,20 +160,30 @@ int main()
 		}
 		window.draw(lines.data(), lines.size(), sf::LinesStrip);
 
-
 		// Axis
 		std::vector<sf::Vertex> axis;
-		lines.clear();
 		// horizontal
 		lines.push_back(sf::Vector2f(graphScreen.left, graphScreen.top + 0.5f*graphScreen.height));
 		lines.push_back(sf::Vector2f(graphScreen.left+graphScreen.width, graphScreen.top + 0.5f*graphScreen.height));
 		//vertical
 		lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width, graphScreen.top));
 		lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width, graphScreen.top+graphScreen.height));
-		// axis color
-		for (auto& l : lines)
+
+		std::vector<float> graduation = computeAxisGraduation(graphRect.left, graphRect.left + graphRect.width);
+		const float graduationSize = 2.f;
+		for (float x : graduation)
 		{
-			l.color = sf::Color(128, 128, 128);
+			x = (x - graphRect.left) / graphRect.width;
+			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height + graduationSize));
+			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height - graduationSize));
+		}
+
+		graduation = computeAxisGraduation(graphRect.top, graphRect.top + graphRect.height);
+		for (float y : graduation)
+		{
+			y = (y - graphRect.top) / graphRect.height;
+			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
+			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
 		}
 		window.draw(lines.data(), lines.size(), sf::Lines);
 
