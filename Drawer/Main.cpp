@@ -2,38 +2,61 @@
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
 #include <string>
+#include <thread>
 
 extern "C" {
 	#include "picoc.h"
 }
 #define NUM_POINTS 1024
 
-std::vector<float> points;
+sf::Mutex mutex;
+std::string sourceCode;
+std::vector<sf::Vector2f> points;
 sf::FloatRect graphRect(-10.f, -10.f, 20.f, 20.f);
 
-void launch(tgui::TextBox::Ptr username)
+void launch()
 {
-	points.clear();
-
-	//std::cout << "Username: " << username->getText().toAnsiString() << std::endl;
-	std::string str = username->getText().toAnsiString();
-	char* buffer = new char[str.size()+1];
-	memcpy(buffer, str.data(), str.size()+1);
-	sqrt(1);
-	for (int i = 0; i < NUM_POINTS; i++)
+	std::vector<sf::Vector2f> result;
+	while (1)
 	{
-		double x = (double)i / NUM_POINTS;
-		x = x * graphRect.width + graphRect.left;
+		result.clear();
 
-		float y = (float)parse(buffer, x);
-		if (i % 30 == 0)
-			std::cout << "x";
+		mutex.lock();
+		float width = graphRect.width;
+		float start = graphRect.left;
+		std::string buffer = sourceCode;
+		mutex.unlock();
 
-		y = (y - graphRect.top) / graphRect.height;
-		points.push_back(y);
+		for (int i = 0; i < NUM_POINTS; i++)
+		{
+			double x = (double)i / NUM_POINTS;
+			x = x * width + start;
+
+			int isCrash = 0;
+			float y = (float)parse(buffer.c_str(), x, &isCrash);
+			if (isCrash)
+			{
+				break;
+			}
+			if (i % 30 == 0)
+				std::cout << "x";
+
+			result.push_back(sf::Vector2f((float)x, y));
+		}
+		
+		std::cout << std::endl;
+
+		mutex.lock();
+		points = result;
+		mutex.unlock();
 	}
-	delete[] buffer;
-	std::cout << "OK" << std::endl;
+}
+
+void callbackTextEdit(tgui::TextBox::Ptr source)
+{
+	mutex.lock();
+	sourceCode = source->getText().toAnsiString();
+	mutex.unlock();
 }
 
 void loadWidgets(tgui::Gui& gui)
@@ -48,22 +71,24 @@ void loadWidgets(tgui::Gui& gui)
 
 
 	// Create the username edit box
-	tgui::TextBox::Ptr editBoxUsername = theme->load("TextBox");
-	editBoxUsername->setSize(windowWidth * 0.25f, windowHeight - 200);
-	editBoxUsername->setPosition(10, 30);
-	editBoxUsername->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
-	gui.add(editBoxUsername, "Code");
+	tgui::TextBox::Ptr editBox = theme->load("TextBox");
+	editBox->setSize(windowWidth * 0.25f, windowHeight - 200);
+	editBox->setPosition(10, 30);
+	editBox->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
+	gui.add(editBox, "Code");
 
+	editBox->connect("TextChanged", callbackTextEdit, editBox);
+	callbackTextEdit(editBox);
 
-	// Create the login button
-	tgui::Button::Ptr button = theme->load("Button");
-	button->setSize(windowWidth * 0.25f, 50);
-	button->setPosition(10, windowHeight -150);
-	button->setText("Launch");
-	gui.add(button);
+	//// Create the login button
+	//tgui::Button::Ptr button = theme->load("Button");
+	//button->setSize(windowWidth * 0.25f, 50);
+	//button->setPosition(10, windowHeight -150);
+	//button->setText("Launch");
+	//gui.add(button);
 
-	// Call the login function when the button is pressed
-	button->connect("pressed", launch, editBoxUsername);
+	//// Call the login function when the button is pressed
+	//button->connect("pressed", launch, editBox);
 }
 
 std::vector<float> computeAxisGraduation(float min, float max)
@@ -73,7 +98,7 @@ std::vector<float> computeAxisGraduation(float min, float max)
 	std::vector<float> axis;
 
 	bool ok = false;
-	float step = FLT_MAX;
+	double step = FLT_MAX;
 	for (int e = -7; e < 9; e++)
 	{
 		double a = pow(10.0, e);
@@ -84,7 +109,7 @@ std::vector<float> computeAxisGraduation(float min, float max)
 
 			if (delta / b <= 10)
 			{
-				step = (float)b;
+				step = b;
 				ok = true;
 				break;
 			}
@@ -95,12 +120,12 @@ std::vector<float> computeAxisGraduation(float min, float max)
 		}
 	}
 
-	float i = floor(min / step) * step;
-	for (; i < max+0.1f*step; i += step)
+	double i = floor(min / step) * step;
+	for (; i < max+0.1*step; i += step)
 	{
 		if (abs(i) > 1e-9)
 		{
-			axis.push_back(i);
+			axis.push_back((float)i);
 		}
 	}
 
@@ -111,6 +136,7 @@ int main()
 {
 	// Create the window
 	sf::RenderWindow window(sf::VideoMode(1000, 700), "TGUI window");
+	window.setFramerateLimit(60);
 	tgui::Gui gui(window);
 
 	try
@@ -124,6 +150,8 @@ int main()
 		system("pause");
 		return 1;
 	}
+
+	std::thread thread(launch);
 
 	// Main loop
 	sf::Clock timer;
@@ -147,19 +175,23 @@ int main()
 			gui.handleEvent(event);
 		}
 
+		// Zoom in
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
 			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
+			sf::Lock lock(mutex);
 			graphRect.width *= 1.02f;
 			graphRect.height *= 1.02f;
 			graphRect.left = center.x - 0.5f * graphRect.width;
 			graphRect.top = center.y - 0.5f * graphRect.height;
 		}
+		// Zoom out
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
 			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
+			sf::Lock lock(mutex);
 			graphRect.width *= 0.98f;
 			graphRect.height *= 0.98f;
 			graphRect.left = center.x - 0.5f * graphRect.width;
@@ -175,13 +207,14 @@ int main()
 		sf::FloatRect graphScreen(gui.getSize().x * 0.25f + 30.f, 100.f, gui.getSize().x * 0.65f, gui.getSize().y - 200.f);
 
 		std::vector<sf::Vertex> lines;
-		int i = 0;
-		for (float y : points)
+		mutex.lock();
+		for (sf::Vector2f p : points)
 		{
-			float x = (float)i / NUM_POINTS;
-			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + (1.f-y) * graphScreen.height));
-			i++;
+			p.x = (p.x - graphRect.left) / graphRect.width;
+			p.y = (p.y - graphRect.top) / graphRect.height;
+			lines.push_back(sf::Vector2f(graphScreen.left + p.x * graphScreen.width, graphScreen.top + (1.f-p.y) * graphScreen.height));
 		}
+		mutex.unlock();
 		window.draw(lines.data(), lines.size(), sf::LinesStrip);
 
 		// Axis
@@ -226,5 +259,6 @@ int main()
 		window.display();
 	}
 
+	thread.detach();
 	return EXIT_SUCCESS;
 }
