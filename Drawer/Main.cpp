@@ -1,6 +1,7 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
 #include <TGUI/TGUI.hpp>
+#include <string>
 
 extern "C" {
 	#include "picoc.h"
@@ -48,7 +49,7 @@ void loadWidgets(tgui::Gui& gui)
 
 	// Create the username edit box
 	tgui::TextBox::Ptr editBoxUsername = theme->load("TextBox");
-	editBoxUsername->setSize(windowWidth * 0.25, windowHeight - 200);
+	editBoxUsername->setSize(windowWidth * 0.25f, windowHeight - 200);
 	editBoxUsername->setPosition(10, 30);
 	editBoxUsername->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
 	gui.add(editBoxUsername, "Code");
@@ -56,7 +57,7 @@ void loadWidgets(tgui::Gui& gui)
 
 	// Create the login button
 	tgui::Button::Ptr button = theme->load("Button");
-	button->setSize(windowWidth / 3, 50);
+	button->setSize(windowWidth * 0.25f, 50);
 	button->setPosition(10, windowHeight -150);
 	button->setText("Launch");
 	gui.add(button);
@@ -83,7 +84,7 @@ std::vector<float> computeAxisGraduation(float min, float max)
 
 			if (delta / b <= 10)
 			{
-				step = b;
+				step = (float)b;
 				ok = true;
 				break;
 			}
@@ -97,7 +98,10 @@ std::vector<float> computeAxisGraduation(float min, float max)
 	float i = floor(min / step) * step;
 	for (; i < max+0.1f*step; i += step)
 	{
-		axis.push_back(i);
+		if (abs(i) > 1e-9)
+		{
+			axis.push_back(i);
+		}
 	}
 
 	return axis;
@@ -148,7 +152,7 @@ int main()
 		gui.draw();
 
 		// Curve
-		sf::FloatRect graphScreen(gui.getSize().x * 0.25f, 100.f, gui.getSize().x * 0.65f, gui.getSize().y - 200.f);
+		sf::FloatRect graphScreen(gui.getSize().x * 0.25f + 30.f, 100.f, gui.getSize().x * 0.65f, gui.getSize().y - 200.f);
 
 		std::vector<sf::Vertex> lines;
 		int i = 0;
@@ -173,7 +177,13 @@ int main()
 		const float graduationSize = 2.f;
 		for (float x : graduation)
 		{
+			char str[32];
+			sprintf_s<32>(str, "%g", x);
+			sf::Text text(str, *gui.getFont(), 12);
 			x = (x - graphRect.left) / graphRect.width;
+			text.setPosition(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height - graduationSize);
+			window.draw(text);
+
 			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height + graduationSize));
 			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height - graduationSize));
 		}
@@ -181,9 +191,15 @@ int main()
 		graduation = computeAxisGraduation(graphRect.top, graphRect.top + graphRect.height);
 		for (float y : graduation)
 		{
+			char str[32];
+			sprintf_s<32>(str, "%g", y);
+			sf::Text text(str, *gui.getFont(), 12);
 			y = (y - graphRect.top) / graphRect.height;
+			text.setPosition(graphScreen.left + 0.5f*graphScreen.width + graduationSize + 1.f, graphScreen.top + (1.f - y) * graphScreen.height - 5.f);
+			window.draw(text);
+
 			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
-			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
+			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));		
 		}
 		window.draw(lines.data(), lines.size(), sf::Lines);
 
