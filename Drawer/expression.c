@@ -1509,6 +1509,8 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
             Token = LexGetToken(Parser, NULL, TRUE);
             if (!TokenCloseBracket)
                 ProgramFail(Parser, "bad argument");
+			if (Token == TokenEOF)
+				ProgramFail(Parser, "eof");
         }
         
     } while (Token != TokenCloseBracket);

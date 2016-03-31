@@ -3,6 +3,7 @@
 #include <TGUI/TGUI.hpp>
 #include <string>
 #include <thread>
+#include <chrono>
 
 extern "C" {
 	#include "picoc.h"
@@ -14,7 +15,7 @@ std::string sourceCode;
 std::vector<sf::Vector2f> points;
 sf::FloatRect graphRect(-10.f, -10.f, 20.f, 20.f);
 
-void launch()
+void execute()
 {
 	std::vector<sf::Vector2f> result;
 	while (1)
@@ -49,6 +50,7 @@ void launch()
 		mutex.lock();
 		points = result;
 		mutex.unlock();
+		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
@@ -151,12 +153,18 @@ int main()
 		return 1;
 	}
 
-	std::thread thread(launch);
+	std::thread thread(execute);
 
 	// Main loop
 	sf::Clock timer;
+	bool drag = false;
+	sf::Vector2f dragPosition;
+	sf::Vector2i dragMousePosition;
 	while (window.isOpen())
 	{
+		//***************************************************
+		// Events and inputs
+		//***************************************************
 		sf::Event event;
 		while (window.pollEvent(event))
 		{
@@ -176,7 +184,7 @@ int main()
 		}
 
 		// Zoom in
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add) && timer.getElapsedTime().asMilliseconds() > 10)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageUp) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
 			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
@@ -187,7 +195,7 @@ int main()
 			graphRect.top = center.y - 0.5f * graphRect.height;
 		}
 		// Zoom out
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract) && timer.getElapsedTime().asMilliseconds() > 10)
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageDown) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
 			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
@@ -197,7 +205,32 @@ int main()
 			graphRect.left = center.x - 0.5f * graphRect.width;
 			graphRect.top = center.y - 0.5f * graphRect.height;
 		}
+		// mouse
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		{
+			if (drag)
+			{
+				sf::Vector2i delta = sf::Mouse::getPosition() - dragMousePosition;
+				const float sensibility = 0.001f;
+				graphRect.left = dragPosition.x - delta.x * sensibility * graphRect.width;
+				graphRect.top = dragPosition.y + delta.y * sensibility * graphRect.height;
+			}
+			else
+			{
+				drag = true;
+				dragPosition = sf::Vector2f(graphRect.left, graphRect.top);
+				dragMousePosition = sf::Mouse::getPosition();
+			}
+		}
+		else
+		{
+			drag = false;
+		}
 
+
+		//***************************************************
+		// Rendering
+		//***************************************************
 		window.clear();
 
 		// Draw all created widgets
@@ -220,11 +253,13 @@ int main()
 		// Axis
 		std::vector<sf::Vertex> axis;
 		// horizontal
-		lines.push_back(sf::Vector2f(graphScreen.left, graphScreen.top + 0.5f*graphScreen.height));
-		lines.push_back(sf::Vector2f(graphScreen.left+graphScreen.width, graphScreen.top + 0.5f*graphScreen.height));
+		float middleY = 1.f + graphRect.top / graphRect.height;
+		lines.push_back(sf::Vector2f(graphScreen.left, graphScreen.top + middleY*graphScreen.height));
+		lines.push_back(sf::Vector2f(graphScreen.left+graphScreen.width, graphScreen.top + middleY*graphScreen.height));
 		//vertical
-		lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width, graphScreen.top));
-		lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width, graphScreen.top+graphScreen.height));
+		float middleX = -graphRect.left / graphRect.width;
+		lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top));
+		lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top+graphScreen.height));
 
 		std::vector<float> graduation = computeAxisGraduation(graphRect.left, graphRect.left + graphRect.width);
 		const float graduationSize = 2.f;
@@ -234,11 +269,11 @@ int main()
 			sprintf_s<32>(str, "%g", x);
 			sf::Text text(str, *gui.getFont(), 12);
 			x = (x - graphRect.left) / graphRect.width;
-			text.setPosition(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height - graduationSize);
+			text.setPosition(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize);
 			window.draw(text);
 
-			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height + graduationSize));
-			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + 0.5f*graphScreen.height - graduationSize));
+			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height + graduationSize));
+			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize));
 		}
 
 		graduation = computeAxisGraduation(graphRect.top, graphRect.top + graphRect.height);
@@ -248,11 +283,11 @@ int main()
 			sprintf_s<32>(str, "%g", y);
 			sf::Text text(str, *gui.getFont(), 12);
 			y = (y - graphRect.top) / graphRect.height;
-			text.setPosition(graphScreen.left + 0.5f*graphScreen.width + graduationSize + 1.f, graphScreen.top + (1.f - y) * graphScreen.height - 5.f);
+			text.setPosition(graphScreen.left + middleX*graphScreen.width + graduationSize + 1.f, graphScreen.top + (1.f - y) * graphScreen.height - 5.f);
 			window.draw(text);
 
-			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
-			lines.push_back(sf::Vector2f(graphScreen.left + 0.5f*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));		
+			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
+			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
 		}
 		window.draw(lines.data(), lines.size(), sf::Lines);
 
