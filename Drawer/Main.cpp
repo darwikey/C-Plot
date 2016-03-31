@@ -126,6 +126,7 @@ int main()
 	}
 
 	// Main loop
+	sf::Clock timer;
 	while (window.isOpen())
 	{
 		sf::Event event;
@@ -144,6 +145,25 @@ int main()
 
 			// Pass the event to all the widgets
 			gui.handleEvent(event);
+		}
+
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Add) && timer.getElapsedTime().asMilliseconds() > 10)
+		{
+			timer.restart();
+			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
+			graphRect.width *= 1.02f;
+			graphRect.height *= 1.02f;
+			graphRect.left = center.x - 0.5f * graphRect.width;
+			graphRect.top = center.y - 0.5f * graphRect.height;
+		}
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Subtract) && timer.getElapsedTime().asMilliseconds() > 10)
+		{
+			timer.restart();
+			sf::Vector2f center(graphRect.left + 0.5f * graphRect.width, graphRect.top + 0.5f * graphRect.height);
+			graphRect.width *= 0.98f;
+			graphRect.height *= 0.98f;
+			graphRect.left = center.x - 0.5f * graphRect.width;
+			graphRect.top = center.y - 0.5f * graphRect.height;
 		}
 
 		window.clear();
