@@ -27,8 +27,8 @@
 #define GETS_BUF_MAX 256
 
 /* for debugging */
-#define PRINT_SOURCE_POS ({ PrintSourceTextErrorLine(Parser->pc->CStdOut, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos); PlatformPrintf(Parser->pc->CStdOut, "\n"); })
-#define PRINT_TYPE(typ) PlatformPrintf(Parser->pc->CStdOut, "%t\n", typ);
+#define PRINT_SOURCE_POS ({ PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos); PlatformPrintf(Parser->pc, "\n"); })
+#define PRINT_TYPE(typ) PlatformPrintf(Parser->pc, "%t\n", typ);
 
 /* small processors use a simplified FILE * for stdio, otherwise use the system FILE * */
 #ifdef BUILTIN_MINI_STDLIB
@@ -357,6 +357,7 @@ struct IncludeLibrary
 #define FREELIST_BUCKETS 8                          /* freelists for 4, 8, 12 ... 32 byte allocs */
 #define SPLIT_MEM_THRESHOLD 16                      /* don't split memory which is close in size */
 #define BREAKPOINT_TABLE_SIZE 21
+#define ERROR_BUFFER_SIZE 1024
 
 
 /* the entire state of the picoc system */
@@ -450,6 +451,8 @@ struct Picoc_Struct
 
     IOFILE *CStdOut;
     IOFILE CStdOutBase;
+	char ErrorBuffer[ERROR_BUFFER_SIZE];
+	unsigned ErrorBufferLength;
 
     /* the picoc version string */
     const char *VersionString;
@@ -570,7 +573,7 @@ void BasicIOInit(Picoc *pc);
 void LibraryInit(Picoc *pc);
 void LibraryAdd(Picoc *pc, struct Table *GlobalTable, const char *LibraryName, struct LibraryFunction *FuncList);
 void CLibraryInit(Picoc *pc);
-void PrintCh(char OutCh, IOFILE *Stream);
+void PrintCh(char OutCh, Picoc* pc);
 void PrintSimpleInt(long Num, IOFILE *Stream);
 void PrintInt(long Num, int FieldWidth, int ZeroPad, int LeftJustify, IOFILE *Stream);
 void PrintStr(const char *Str, IOFILE *Stream);
@@ -595,8 +598,8 @@ void PlatformCleanup(Picoc *pc);
 char *PlatformGetLine(char *Buf, int MaxLen, const char *Prompt);
 int PlatformGetCharacter();
 void PlatformPutc(unsigned char OutCh, union OutputStreamInfo *);
-void PlatformPrintf(IOFILE *Stream, const char *Format, ...);
-void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args);
+void PlatformPrintf(Picoc *pc, const char *Format, ...);
+void PlatformVPrintf(Picoc *pc, const char *Format, va_list Args);
 void PlatformExit(Picoc *pc, int ExitVal);
 char *PlatformMakeTempName(Picoc *pc, char *TempNameBuffer);
 void PlatformLibraryInit(Picoc *pc);

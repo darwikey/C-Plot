@@ -14,10 +14,12 @@ sf::Mutex mutex;
 std::string sourceCode;
 std::vector<sf::Vector2f> points;
 sf::FloatRect graphRect(-10.f, -10.f, 20.f, 20.f);
+sf::Text errorMessage;
 
 void execute()
 {
 	std::vector<sf::Vector2f> result;
+	char errorBuffer[1024];
 	while (1)
 	{
 		result.clear();
@@ -27,14 +29,14 @@ void execute()
 		float start = graphRect.left;
 		std::string buffer = sourceCode;
 		mutex.unlock();
+		int isCrash = 0;
 
 		for (int i = 0; i < NUM_POINTS; i++)
 		{
 			double x = (double)i / NUM_POINTS;
 			x = x * width + start;
 
-			int isCrash = 0;
-			float y = (float)parse(buffer.c_str(), x, &isCrash);
+			float y = (float)parse(buffer.c_str(), x, &isCrash, errorBuffer);
 			if (isCrash)
 			{
 				break;
@@ -49,6 +51,10 @@ void execute()
 
 		mutex.lock();
 		points = result;
+		if (isCrash)
+			errorMessage.setString(errorBuffer);
+		else
+			errorMessage.setString(sf::String());
 		mutex.unlock();
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
@@ -91,6 +97,9 @@ void loadWidgets(tgui::Gui& gui)
 
 	//// Call the login function when the button is pressed
 	//button->connect("pressed", launch, editBox);
+	errorMessage.setFont(*gui.getFont());
+	errorMessage.setCharacterSize(13);
+	errorMessage.setColor(sf::Color::Red);
 }
 
 std::vector<float> computeAxisGraduation(float min, float max)
@@ -290,6 +299,12 @@ int main()
 			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
 		}
 		window.draw(lines.data(), lines.size(), sf::Lines);
+
+		// Display messages
+		mutex.lock();
+		errorMessage.setPosition(30, gui.getSize().y - 100);
+		window.draw(errorMessage);
+		mutex.unlock();
 
 		window.display();
 	}

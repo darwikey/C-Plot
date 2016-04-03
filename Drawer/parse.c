@@ -629,7 +629,7 @@ enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemi
                             
                             #if 0
                             PRINT_SOURCE_POS;
-                            PlatformPrintf(Parser->pc->CStdOut, "%t %s = %d;\n", CValue->Typ, Identifier, CValue->Val->Integer);
+                            PlatformPrintf(Parser->pc, "%t %s = %d;\n", CValue->Typ, Identifier, CValue->Val->Integer);
                             printf("%d\n", VariableDefined(Parser->pc, Identifier));
                             #endif
                             VariableDefine(Parser->pc, Parser, Identifier, CValue, CValue->Typ, TRUE);
@@ -993,12 +993,12 @@ void PicocParseInteractiveNoStartPrompt(Picoc *pc, int EnableDebugger)
     if (Ok == ParseResultError)
         ProgramFail(&Parser, "parse error");
     
-    PlatformPrintf(pc->CStdOut, "\n");
+    PlatformPrintf(pc, "\n");
 }
 
 /* parse interactively, showing a startup message */
 void PicocParseInteractive(Picoc *pc)
 {
-    PlatformPrintf(pc->CStdOut, INTERACTIVE_PROMPT_START);
+    PlatformPrintf(pc, INTERACTIVE_PROMPT_START);
     PicocParseInteractiveNoStartPrompt(pc, TRUE);
 }

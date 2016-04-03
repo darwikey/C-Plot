@@ -83,7 +83,7 @@ void PicocCallMain(Picoc *pc, double arg)
 }
 #endif
 
-void PrintSourceTextErrorLine(IOFILE *Stream, const char *FileName, const char *SourceText, int Line, int CharacterPos)
+void PrintSourceTextErrorLine(Picoc *pc, const char *FileName, const char *SourceText, int Line, int CharacterPos)
 {
     int LineCount;
     const char *LinePos;
@@ -100,26 +100,26 @@ void PrintSourceTextErrorLine(IOFILE *Stream, const char *FileName, const char *
         }
         
         /* display the line */
-        for (CPos = LinePos; *CPos != '\n' && *CPos != '\0'; CPos++)
-            PrintCh(*CPos, Stream);
-        PrintCh('\n', Stream);
+		for (CPos = LinePos; *CPos != '\n' && *CPos != '\0'; CPos++)
+			PrintCh(*CPos, pc);
+        PrintCh('\n', pc);
         
         /* display the error position */
         for (CPos = LinePos, CCount = 0; *CPos != '\n' && *CPos != '\0' && (CCount < CharacterPos || *CPos == ' '); CPos++, CCount++)
         {
             if (*CPos == '\t')
-                PrintCh('\t', Stream);
+                PrintCh('\t', pc);
             else
-                PrintCh(' ', Stream);
+                PrintCh(' ', pc);
         }
     }
     else
     {
         /* assume we're in interactive mode - try to make the arrow match up with the input text */
         for (CCount = 0; CCount < CharacterPos + (int)strlen(INTERACTIVE_PROMPT_STATEMENT); CCount++)
-            PrintCh(' ', Stream);
+            PrintCh(' ', pc);
     }
-    PlatformPrintf(Stream, "^\n%s:%d:%d ", FileName, Line, CharacterPos);
+    PlatformPrintf(pc, "line %d: ", Line);
     
 }
 
@@ -128,11 +128,10 @@ void ProgramFail(struct ParseState *Parser, const char *Message, ...)
 {
     va_list Args;
 
-    PrintSourceTextErrorLine(Parser->pc->CStdOut, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
+    PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
     va_start(Args, Message);
-    PlatformVPrintf(Parser->pc->CStdOut, Message, Args);
+	PlatformVPrintf(Parser->pc, Message, Args);
     va_end(Args);
-    PlatformPrintf(Parser->pc->CStdOut, "\n");
     PlatformExit(Parser->pc, 1);
 }
 
@@ -142,29 +141,26 @@ void ProgramFailNoParser(Picoc *pc, const char *Message, ...)
     va_list Args;
 
     va_start(Args, Message);
-    PlatformVPrintf(pc->CStdOut, Message, Args);
+    PlatformVPrintf(pc, Message, Args);
     va_end(Args);
-    PlatformPrintf(pc->CStdOut, "\n");
     PlatformExit(pc, 1);
 }
 
 /* like ProgramFail() but gives descriptive error messages for assignment */
 void AssignFail(struct ParseState *Parser, const char *Format, struct ValueType *Type1, struct ValueType *Type2, int Num1, int Num2, const char *FuncName, int ParamNo)
 {
-    IOFILE *Stream = Parser->pc->CStdOut;
-    
-    PrintSourceTextErrorLine(Parser->pc->CStdOut, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
-    PlatformPrintf(Stream, "can't %s ", (FuncName == NULL) ? "assign" : "set");   
+    PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
+    PlatformPrintf(Parser->pc, "can't %s ", (FuncName == NULL) ? "assign" : "set");   
         
     if (Type1 != NULL)
-        PlatformPrintf(Stream, Format, Type1, Type2);
+        PlatformPrintf(Parser->pc, Format, Type1, Type2);
     else
-        PlatformPrintf(Stream, Format, Num1, Num2);
+        PlatformPrintf(Parser->pc, Format, Num1, Num2);
     
     if (FuncName != NULL)
-        PlatformPrintf(Stream, " in argument %d of call to %s()", ParamNo, FuncName);
+        PlatformPrintf(Parser->pc, " in argument %d of call to %s()", ParamNo, FuncName);
     
-    PlatformPrintf(Stream, "\n");
+    PlatformPrintf(Parser->pc, "\n");
     PlatformExit(Parser->pc, 1);
 }
 
@@ -173,25 +169,40 @@ void LexFail(Picoc *pc, struct LexState *Lexer, const char *Message, ...)
 {
     va_list Args;
 
-    PrintSourceTextErrorLine(pc->CStdOut, Lexer->FileName, Lexer->SourceText, Lexer->Line, Lexer->CharacterPos);
+    PrintSourceTextErrorLine(pc, Lexer->FileName, Lexer->SourceText, Lexer->Line, Lexer->CharacterPos);
     va_start(Args, Message);
-    PlatformVPrintf(pc->CStdOut, Message, Args);
+    PlatformVPrintf(pc, Message, Args);
     va_end(Args);
-    PlatformPrintf(pc->CStdOut, "\n");
+    //PlatformPrintf(pc, "\n");
     PlatformExit(pc, 1);
 }
 
 /* printf for compiler error reporting */
-void PlatformPrintf(IOFILE *Stream, const char *Format, ...)
+void PlatformPrintf(Picoc *pc, const char *Format, ...)
 {
     va_list Args;
     
     va_start(Args, Format);
-    PlatformVPrintf(Stream, Format, Args);
+    //PlatformVPrintf(Stream, Format, Args);
+	
+	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
+	{
+		char* str = pc->ErrorBuffer + pc->ErrorBufferLength;
+		pc->ErrorBufferLength += vsprintf_s(str, ERROR_BUFFER_SIZE - pc->ErrorBufferLength, Format, Args);
+	}
     va_end(Args);
 }
 
-void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args)
+void PlatformVPrintf(Picoc *pc, const char *Format, va_list Args)
+{	
+	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
+	{
+		char* str = pc->ErrorBuffer + pc->ErrorBufferLength;
+		pc->ErrorBufferLength += vsprintf_s(str, ERROR_BUFFER_SIZE - pc->ErrorBufferLength, Format, Args);
+	}
+}
+
+/*void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args)
 {
     const char *FPos;
     
@@ -216,7 +227,7 @@ void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args)
         else
             PrintCh(*FPos, Stream);
     }
-}
+}*/
 
 /* make a new temporary name. takes a static buffer of char [7] as a parameter. should be initialised to "XX0000"
  * where XX can be any characters */

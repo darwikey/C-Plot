@@ -716,9 +716,15 @@ void StdioSetupFunc(Picoc *pc)
 }
 
 /* portability-related I/O calls */
-void PrintCh(char OutCh, FILE *Stream)
+void PrintCh(char OutCh, Picoc* pc)
 {
-    putc(OutCh, Stream);
+    //putc(OutCh, Stream);
+	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
+	{
+		pc->ErrorBuffer[pc->ErrorBufferLength] = OutCh;
+		pc->ErrorBufferLength++;
+		pc->ErrorBuffer[pc->ErrorBufferLength] = '\0';
+	}
 }
 
 void PrintSimpleInt(long Num, FILE *Stream)
