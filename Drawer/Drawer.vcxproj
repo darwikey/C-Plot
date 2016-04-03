@@ -144,7 +144,6 @@
     <ClCompile Include="heap.c" />
     <ClCompile Include="include.c" />
     <ClCompile Include="lex.c" />
-    <ClCompile Include="library_msvc.c" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="parse.c" />
     <ClCompile Include="picoc.c" />

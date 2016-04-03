@@ -46,13 +46,28 @@ void IncludeCleanup(Picoc *pc)
 /* register a new build-in include file */
 void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, const char *SetupCSource)
 {
-    struct IncludeLibrary *NewLib = HeapAllocMem(pc, sizeof(struct IncludeLibrary));
+    /*struct IncludeLibrary *NewLib = HeapAllocMem(pc, sizeof(struct IncludeLibrary));
     NewLib->IncludeName = TableStrRegister(pc, IncludeName);
     NewLib->SetupFunction = SetupFunction;
     NewLib->FuncList = FuncList;
     NewLib->SetupCSource = SetupCSource;
     NewLib->NextLib = pc->IncludeLibList;
-    pc->IncludeLibList = NewLib;
+    pc->IncludeLibList = NewLib;*/
+	char* name = TableStrRegister(pc, IncludeName);
+
+	VariableDefine(pc, NULL, name, NULL, &pc->VoidType, FALSE);
+
+	// run an extra startup function if there is one 
+	if (SetupFunction != NULL)
+		SetupFunction(pc);
+
+	// parse the setup C source code - may define types etc. 
+	if (SetupCSource != NULL)
+		PicocParse(pc, name, SetupCSource, strlen(SetupCSource), TRUE, TRUE, FALSE, FALSE);
+
+	// set up the library functions 
+	if (FuncList != NULL)
+		LibraryAdd(pc, &pc->GlobalTable, name, FuncList);
 }
 
 /* include all of the system headers */
@@ -67,34 +82,34 @@ void PicocIncludeAllSystemHeaders(Picoc *pc)
 /* include one of a number of predefined libraries, or perhaps an actual file */
 void IncludeFile(Picoc *pc, char *FileName)
 {
-    struct IncludeLibrary *LInclude;
+    /*struct IncludeLibrary *LInclude;
     
-    /* scan for the include file name to see if it's in our list of predefined includes */
+    // scan for the include file name to see if it's in our list of predefined includes 
     for (LInclude = pc->IncludeLibList; LInclude != NULL; LInclude = LInclude->NextLib)
     {
         if (strcmp(LInclude->IncludeName, FileName) == 0)
         {
-            /* found it - protect against multiple inclusion */
+            // found it - protect against multiple inclusion
             if (!VariableDefined(pc, FileName))
             {
                 VariableDefine(pc, NULL, FileName, NULL, &pc->VoidType, FALSE);
                 
-                /* run an extra startup function if there is one */
+                // run an extra startup function if there is one 
                 if (LInclude->SetupFunction != NULL)
                     (*LInclude->SetupFunction)(pc);
                 
-                /* parse the setup C source code - may define types etc. */
+                // parse the setup C source code - may define types etc. 
                 if (LInclude->SetupCSource != NULL)
                     PicocParse(pc, FileName, LInclude->SetupCSource, strlen(LInclude->SetupCSource), TRUE, TRUE, FALSE, FALSE);
                 
-                /* set up the library functions */
+                // set up the library functions 
                 if (LInclude->FuncList != NULL)
                     LibraryAdd(pc, &pc->GlobalTable, FileName, LInclude->FuncList);
             }
             
             return;
         }
-    }
+    }*/
     
     /* not a predefined file, read a real file */
     //PicocPlatformScanFile(pc, FileName);

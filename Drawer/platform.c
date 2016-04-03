@@ -24,7 +24,6 @@ void PicocInitialise(Picoc *pc, int StackSize)
     LibraryAdd(pc, &GlobalTable, "c library", &CLibrary[0]);
     CLibraryInit(pc);
 #endif
-    PlatformLibraryInit(pc);
     DebugInit(pc);
 }
 

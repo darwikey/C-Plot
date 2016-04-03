@@ -54,9 +54,6 @@
     <ClCompile Include="variable.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="library_msvc.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="platform_msvc.c">
       <Filter>Fichiers sources</Filter>
     </ClCompile>

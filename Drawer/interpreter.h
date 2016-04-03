@@ -602,7 +602,6 @@ void PlatformPrintf(Picoc *pc, const char *Format, ...);
 void PlatformVPrintf(Picoc *pc, const char *Format, va_list Args);
 void PlatformExit(Picoc *pc, int ExitVal);
 char *PlatformMakeTempName(Picoc *pc, char *TempNameBuffer);
-void PlatformLibraryInit(Picoc *pc);
 
 /* include.c */
 void IncludeInit(Picoc *pc);

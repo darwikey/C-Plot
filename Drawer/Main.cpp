@@ -82,7 +82,7 @@ void loadWidgets(tgui::Gui& gui)
 	tgui::TextBox::Ptr editBox = theme->load("TextBox");
 	editBox->setSize(windowWidth * 0.25f, windowHeight - 200);
 	editBox->setPosition(10, 30);
-	editBox->setText("#include \"stdio.h\"\n#include \"math.h\"\ndouble main(double x){\n\nreturn x;\n}");
+	editBox->setText("double main(double x){\n\nreturn x;\n}");
 	gui.add(editBox, "Code");
 
 	editBox->connect("TextChanged", callbackTextEdit, editBox);
