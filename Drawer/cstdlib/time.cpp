@@ -16,7 +16,7 @@ static int CLK_TCKValue = CLK_TCK;
 
 void StdAsctime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Pointer = asctime(Param[0]->Val->Pointer);
+    ReturnValue->Val->Pointer = asctime((tm*)Param[0]->Val->Pointer);
 }
 
 void StdClock(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
@@ -26,7 +26,7 @@ void StdClock(struct ParseState *Parser, struct Value *ReturnValue, struct Value
 
 void StdCtime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Pointer = ctime(Param[0]->Val->Pointer);
+    ReturnValue->Val->Pointer = ctime((time_t*)Param[0]->Val->Pointer);
 }
 
 #ifndef NO_FP
@@ -38,27 +38,27 @@ void StdDifftime(struct ParseState *Parser, struct Value *ReturnValue, struct Va
 
 void StdGmtime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Pointer = gmtime(Param[0]->Val->Pointer);
+    ReturnValue->Val->Pointer = gmtime((time_t*)Param[0]->Val->Pointer);
 }
 
 void StdLocaltime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Pointer = localtime(Param[0]->Val->Pointer);
+    ReturnValue->Val->Pointer = localtime((time_t*)Param[0]->Val->Pointer);
 }
 
 void StdMktime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Integer = (int)mktime(Param[0]->Val->Pointer);
+    ReturnValue->Val->Integer = (int)mktime((tm*)Param[0]->Val->Pointer);
 }
 
 void StdTime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Integer = (int)time(Param[0]->Val->Pointer);
+    ReturnValue->Val->Integer = (int)time((time_t*)Param[0]->Val->Pointer);
 }
 
 void StdStrftime(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
-    ReturnValue->Val->Integer = strftime(Param[0]->Val->Pointer, Param[1]->Val->Integer, Param[2]->Val->Pointer, Param[3]->Val->Pointer);
+    ReturnValue->Val->Integer = strftime((char*)Param[0]->Val->Pointer, Param[1]->Val->Integer, (char*)Param[2]->Val->Pointer, (tm*)Param[3]->Val->Pointer);
 }
 
 #ifndef WIN32

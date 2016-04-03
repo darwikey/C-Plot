@@ -359,7 +359,7 @@ enum LexToken LexGetStringConstant(Picoc *pc, struct LexState *Lexer, struct Val
     }
     EndPos = Lexer->Pos;
     
-    EscBuf = HeapAllocStack(pc, EndPos - StartPos);
+    EscBuf = (char*)HeapAllocStack(pc, EndPos - StartPos);
     if (EscBuf == NULL)
         LexFail(pc, Lexer, "out of memory");
     
@@ -612,7 +612,7 @@ void *LexAnalyse(Picoc *pc, const char *FileName, const char *Source, int Source
 void LexInitParser(struct ParseState *Parser, Picoc *pc, const char *SourceText, void *TokenSource, char *FileName, int RunIt, int EnableDebugger)
 {
     Parser->pc = pc;
-    Parser->Pos = TokenSource;
+    Parser->Pos = (unsigned char*)TokenSource;
     Parser->Line = 1;
     Parser->FileName = FileName;
     Parser->Mode = RunIt ? RunModeRun : RunModeSkip;
@@ -672,8 +672,8 @@ enum LexToken LexGetRawToken(struct ParseState *Parser, struct Value **Value, in
 
                 /* put the new line at the end of the linked list of interactive lines */        
                 LineTokens = LexAnalyse(pc, pc->StrEmpty, &LineBuffer[0], strlen(LineBuffer), &LineBytes);
-                LineNode = VariableAlloc(pc, Parser, sizeof(struct TokenLine), TRUE);
-                LineNode->Tokens = LineTokens;
+                LineNode = (TokenLine*)VariableAlloc(pc, Parser, sizeof(struct TokenLine), TRUE);
+                LineNode->Tokens = (unsigned char*)LineTokens;
                 LineNode->NumBytes = LineBytes;
                 if (pc->InteractiveHead == NULL)
                 { 
@@ -687,7 +687,7 @@ enum LexToken LexGetRawToken(struct ParseState *Parser, struct Value **Value, in
 
                 pc->InteractiveTail = LineNode;
                 pc->InteractiveCurrentLine = LineNode;
-                Parser->Pos = LineTokens;
+                Parser->Pos = (unsigned char*)LineTokens;
             }
             else
             { 
@@ -947,7 +947,7 @@ void *LexCopyTokens(struct ParseState *StartParser, struct ParseState *EndParser
     { 
         /* non-interactive mode - copy the tokens */
         MemSize = EndParser->Pos - StartParser->Pos;
-        NewTokens = VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
+        NewTokens = (unsigned char*)VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
         memcpy(NewTokens, (void *)StartParser->Pos, MemSize);
     }
     else
@@ -960,7 +960,7 @@ void *LexCopyTokens(struct ParseState *StartParser, struct ParseState *EndParser
         { 
             /* all on a single line */
             MemSize = EndParser->Pos - StartParser->Pos;
-            NewTokens = VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
+            NewTokens = (unsigned char*)VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
             memcpy(NewTokens, (void *)StartParser->Pos, MemSize);
         }
         else
@@ -973,7 +973,7 @@ void *LexCopyTokens(struct ParseState *StartParser, struct ParseState *EndParser
             
             assert(ILine != NULL);
             MemSize += EndParser->Pos - &ILine->Tokens[0];
-            NewTokens = VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
+            NewTokens = (unsigned char*)VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
             
             CopySize = &pc->InteractiveCurrentLine->Tokens[pc->InteractiveCurrentLine->NumBytes-TOKEN_DATA_OFFSET] - Pos;
             memcpy(NewTokens, Pos, CopySize);

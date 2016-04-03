@@ -180,7 +180,7 @@ struct FuncDef
     int VarArgs;                    /* has a variable number of arguments after the explicitly specified ones */
     struct ValueType **ParamType;   /* array of parameter types */
     char **ParamName;               /* array of parameter names */
-    void (*Intrinsic)();            /* intrinsic call address or NULL */
+    void (*Intrinsic)(struct ParseState *Parser, struct Value *, struct Value **, int);            /* intrinsic call address or NULL */
     struct ParseState Body;         /* lexical tokens of the function body if not intrinsic */
 };
 
@@ -612,8 +612,8 @@ void IncludeFile(Picoc *pc, char *Filename);
  * void PicocIncludeAllSystemHeaders(); */
  
 /* debug.c */
-void DebugInit();
-void DebugCleanup();
+void DebugInit(Picoc* pc);
+void DebugCleanup(Picoc* pc);
 void DebugCheckStatement(struct ParseState *Parser);
 
 

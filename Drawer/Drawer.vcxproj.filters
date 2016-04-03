@@ -21,68 +21,68 @@
     <ClCompile Include="Main.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="debug.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="expression.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="heap.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="include.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="lex.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="parse.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="picoc.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="platform.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="table.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="type.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="variable.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="platform_msvc.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="clibrary.c">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="cstdlib\ctype.c">
+    <ClCompile Include="cstdlib\ctype.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\errno.c">
+    <ClCompile Include="cstdlib\errno.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\math.c">
+    <ClCompile Include="cstdlib\math.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\stdbool.c">
+    <ClCompile Include="cstdlib\stdbool.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\stdio.c">
+    <ClCompile Include="cstdlib\stdio.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\stdlib.c">
+    <ClCompile Include="cstdlib\stdlib.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\string.c">
+    <ClCompile Include="cstdlib\string.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
     </ClCompile>
-    <ClCompile Include="cstdlib\time.c">
+    <ClCompile Include="cstdlib\time.cpp">
       <Filter>Fichiers sources\cstlib</Filter>
+    </ClCompile>
+    <ClCompile Include="clibrary.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="debug.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="expression.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="heap.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="include.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="lex.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="parse.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="picoc.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="platform.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="platform_msvc.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="table.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="type.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="variable.cpp">
+      <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

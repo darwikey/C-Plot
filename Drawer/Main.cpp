@@ -5,9 +5,8 @@
 #include <thread>
 #include <chrono>
 
-extern "C" {
-	#include "picoc.h"
-}
+#include "picoc.h"
+
 #define NUM_POINTS 1024
 
 sf::Mutex mutex;

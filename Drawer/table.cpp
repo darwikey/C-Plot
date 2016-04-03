@@ -62,7 +62,7 @@ int TableSet(Picoc *pc, struct Table *Tbl, char *Key, struct Value *Val, const c
     
     if (FoundEntry == NULL)
     {   /* add it to the table */
-        struct TableEntry *NewEntry = VariableAlloc(pc, NULL, sizeof(struct TableEntry), Tbl->OnHeap);
+        struct TableEntry *NewEntry = (TableEntry*)VariableAlloc(pc, NULL, sizeof(struct TableEntry), Tbl->OnHeap);
         NewEntry->DeclFileName = DeclFileName;
         NewEntry->DeclLine = DeclLine;
         NewEntry->DeclColumn = DeclColumn;
@@ -145,7 +145,7 @@ char *TableSetIdentifier(Picoc *pc, struct Table *Tbl, const char *Ident, int Id
         return &FoundEntry->p.Key[0];
     else
     {   /* add it to the table - we economise by not allocating the whole structure here */
-        struct TableEntry *NewEntry = HeapAllocMem(pc, sizeof(struct TableEntry) - sizeof(union TableEntryPayload) + IdentLen + 1);
+        struct TableEntry *NewEntry = (TableEntry*)HeapAllocMem(pc, sizeof(struct TableEntry) - sizeof(TableEntry::TableEntryPayload) + IdentLen + 1);
         if (NewEntry == NULL)
             ProgramFailNoParser(pc, "out of memory");
             

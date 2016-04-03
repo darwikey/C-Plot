@@ -29,7 +29,7 @@ enum ParseResult ParseStatementMaybeRun(struct ParseState *Parser, int Condition
         Parser->Mode = RunModeSkip;
         Result = ParseStatement(Parser, CheckTrailingSemicolon);
         Parser->Mode = OldMode;
-        return Result;
+        return (ParseResult)Result;
     }
     else
         return ParseStatement(Parser, CheckTrailingSemicolon);
@@ -145,7 +145,7 @@ struct Value *ParseFunctionDefinition(struct ParseState *Parser, struct ValueTyp
             ProgramFail(Parser, "function definition expected");
 
         FuncValue->Val->FuncDef.Body = FuncBody;
-        FuncValue->Val->FuncDef.Body.Pos = LexCopyTokens(&FuncBody, Parser);
+        FuncValue->Val->FuncDef.Body.Pos = (unsigned char*)LexCopyTokens(&FuncBody, Parser);
 
         /* is this function already in the global table? */
         if (TableGet(&pc->GlobalTable, Identifier, &OldFuncValue, NULL, NULL, NULL))
@@ -417,7 +417,7 @@ void ParseMacroDefinition(struct ParseState *Parser)
     ParserCopy(&MacroValue->Val->MacroDef.Body, Parser);
     MacroValue->Typ = &Parser->pc->MacroType;
     LexToEndOfLine(Parser);
-    MacroValue->Val->MacroDef.Body.Pos = LexCopyTokens(&MacroValue->Val->MacroDef.Body, Parser);
+    MacroValue->Val->MacroDef.Body.Pos = (unsigned char*)LexCopyTokens(&MacroValue->Val->MacroDef.Body, Parser);
     
     if (!TableSet(Parser->pc, &Parser->pc->GlobalTable, MacroNameStr, MacroValue, (char *)Parser->FileName, Parser->Line, Parser->CharacterPos))
         ProgramFail(Parser, "'%s' is already defined", MacroNameStr);
@@ -943,7 +943,7 @@ void PicocParse(Picoc *pc, const char *FileName, const char *Source, int SourceL
     /* allocate a cleanup node so we can clean up the tokens later */
     if (!CleanupNow)
     {
-        NewCleanupNode = HeapAllocMem(pc, sizeof(struct CleanupTokenNode));
+        NewCleanupNode = (CleanupTokenNode*)HeapAllocMem(pc, sizeof(struct CleanupTokenNode));
         if (NewCleanupNode == NULL)
             ProgramFailNoParser(pc, "out of memory");
         
