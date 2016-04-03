@@ -45,7 +45,6 @@ struct StdVararg
 /* initialises the I/O system so error reporting works */
 void BasicIOInit(Picoc *pc)
 {
-    pc->CStdOut = stdout;
     stdinValue = stdin;
     stdoutValue = stdout;
     stderrValue = stderr;

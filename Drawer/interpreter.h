@@ -449,8 +449,6 @@ struct Picoc_Struct
     int BigEndian;
     int LittleEndian;
 
-    IOFILE *CStdOut;
-    IOFILE CStdOutBase;
 	char ErrorBuffer[ERROR_BUFFER_SIZE];
 	unsigned ErrorBufferLength;
 

@@ -14,6 +14,7 @@ std::string sourceCode;
 std::vector<sf::Vector2f> points;
 sf::FloatRect graphRect(-10.f, -10.f, 20.f, 20.f);
 sf::Text errorMessage;
+float progression = 0.f;
 
 void execute()
 {
@@ -33,6 +34,7 @@ void execute()
 		for (int i = 0; i < NUM_POINTS; i++)
 		{
 			double x = (double)i / NUM_POINTS;
+			progression = (float)x;
 			x = x * width + start;
 
 			float y = (float)parse(buffer.c_str(), x, &isCrash, errorBuffer);
@@ -40,13 +42,13 @@ void execute()
 			{
 				break;
 			}
-			if (i % 30 == 0)
-				std::cout << "x";
+			//if (i % 30 == 0)
+				//std::cout << "x";
 
 			result.push_back(sf::Vector2f((float)x, y));
 		}
 		
-		std::cout << std::endl;
+		//std::cout << std::endl;
 
 		mutex.lock();
 		points = result;
@@ -304,6 +306,14 @@ int main()
 		errorMessage.setPosition(30, gui.getSize().y - 100);
 		window.draw(errorMessage);
 		mutex.unlock();
+
+		// Progression bar
+		sf::RectangleShape bar (sf::Vector2f(progression * 0.25f * gui.getSize().x, 3.f));
+		bar.setPosition(0, 15);
+		bar.setFillColor(sf::Color(50, 50, 255));
+		bar.setOutlineThickness(1.f);
+		bar.setOutlineColor(sf::Color::Blue);
+		window.draw(bar);
 
 		window.display();
 	}
