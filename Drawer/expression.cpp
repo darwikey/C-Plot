@@ -384,7 +384,7 @@ void ExpressionAssignToPointer(struct ParseState *Parser, struct Value *ToValue,
         ToValue->Val->Pointer = FromValue->Val->Pointer;
     }
     else
-        AssignFail(Parser, "%t from %t", ToValue->Typ, FromValue->Typ, 0, 0, FuncName, ParamNo); 
+        AssignFail(Parser, " from ", ToValue->Typ, FromValue->Typ, 0, 0, FuncName, ParamNo); 
 }
 
 /* assign any kind of value */
@@ -394,7 +394,7 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
         AssignFail(Parser, "not an lvalue", NULL, NULL, 0, 0, FuncName, ParamNo); 
 
     if (IS_NUMERIC_COERCIBLE(DestValue) && !IS_NUMERIC_COERCIBLE_PLUS_POINTERS(SourceValue, AllowPointerCoercion))
-        AssignFail(Parser, "%t from %t", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+        AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
 
     switch (DestValue->Typ->Base)
     {
@@ -410,7 +410,7 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
 #ifndef NO_FP
         case TypeFP:
             if (!IS_NUMERIC_COERCIBLE_PLUS_POINTERS(SourceValue, AllowPointerCoercion)) 
-                AssignFail(Parser, "%t from %t", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
             
             DestValue->Val->FP = ExpressionCoerceFP(SourceValue);
             break;
@@ -458,7 +458,7 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
             }
 
             if (DestValue->Typ != SourceValue->Typ)
-                AssignFail(Parser, "%t from %t", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
             
             if (DestValue->Typ->ArraySize != SourceValue->Typ->ArraySize)
                 AssignFail(Parser, "from an array of size %d to one of size %d", NULL, NULL, DestValue->Typ->ArraySize, SourceValue->Typ->ArraySize, FuncName, ParamNo);
@@ -469,13 +469,13 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
         case TypeStruct:
         case TypeUnion:
             if (DestValue->Typ != SourceValue->Typ)
-                AssignFail(Parser, "%t from %t", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
             
             memcpy((void *)DestValue->Val, (void *)SourceValue->Val, TypeSizeValue(SourceValue, FALSE));
             break;
         
         default:
-            AssignFail(Parser, "%t", DestValue->Typ, NULL, 0, 0, FuncName, ParamNo); 
+            AssignFail(Parser, "", DestValue->Typ, NULL, 0, 0, FuncName, ParamNo); 
             break;
     }
 }
@@ -704,7 +704,7 @@ void ExpressionInfixOperator(struct ParseState *Parser, struct ExpressionStack *
         {
             case TypeArray:   Result = VariableAllocValueFromExistingData(Parser, BottomValue->Typ->FromType, (union AnyValue *)(&BottomValue->Val->ArrayMem[0] + TypeSize(BottomValue->Typ, ArrayIndex, TRUE)), BottomValue->IsLValue, BottomValue->LValueFrom); break;
             case TypePointer: Result = VariableAllocValueFromExistingData(Parser, BottomValue->Typ->FromType, (union AnyValue *)((char *)BottomValue->Val->Pointer + TypeSize(BottomValue->Typ->FromType, 0, TRUE) * ArrayIndex), BottomValue->IsLValue, BottomValue->LValueFrom); break;
-            default:          ProgramFail(Parser, "this %t is not an array", BottomValue->Typ);
+            default:          ProgramFail(Parser, "this is not an array");
         }
         
         ExpressionStackPushValueNode(Parser, StackTop, Result);
@@ -1058,7 +1058,7 @@ void ExpressionGetStructElement(struct ParseState *Parser, struct ExpressionStac
             DerefDataLoc = (char*)VariableDereferencePointer(Parser, ParamVal, &StructVal, NULL, &StructType, NULL);
         
         if (StructType->Base != TypeStruct && StructType->Base != TypeUnion)
-            ProgramFail(Parser, "can't use '%s' on something that's not a struct or union %s : it's a %t", (Token == TokenDot) ? "." : "->", (Token == TokenArrow) ? "pointer" : "", ParamVal->Typ);
+            ProgramFail(Parser, "can't use '%s' on something that's not a struct or union %s", (Token == TokenDot) ? "." : "->", (Token == TokenArrow) ? "pointer" : "");
             
         if (!TableGet(StructType->Members, Ident->Val->Identifier, &MemberValue, NULL, NULL, NULL))
             ProgramFail(Parser, "doesn't have a member called '%s'", Ident->Val->Identifier);
@@ -1461,7 +1461,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
         }
         
         if (FuncValue->Typ->Base != TypeFunction)
-            ProgramFail(Parser, "%t is not a function - can't call", FuncValue->Typ);
+            ProgramFail(Parser, "it is not a function - can't call");
     
         ExpressionStackPushValueByType(Parser, StackTop, FuncValue->Val->FuncDef.ReturnType);
         ReturnValue = (*StackTop)->Val;
@@ -1550,7 +1550,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
             if (RunIt)
             {
                 if (FuncParser.Mode == RunModeRun && FuncValue->Val->FuncDef.ReturnType != &Parser->pc->VoidType)
-                    ProgramFail(&FuncParser, "no value returned from a function returning %t", FuncValue->Val->FuncDef.ReturnType);
+                    ProgramFail(&FuncParser, "no value returned from a function returning something");
 
                 else if (FuncParser.Mode == RunModeGoto)
                     ProgramFail(&FuncParser, "couldn't find goto label '%s'", FuncParser.SearchGotoLabel);
@@ -1579,7 +1579,7 @@ long ExpressionParseInt(struct ParseState *Parser)
     if (Parser->Mode == RunModeRun)
     { 
         if (!IS_NUMERIC_COERCIBLE(Val))
-            ProgramFail(Parser, "integer value expected instead of %t", Val->Typ);
+            ProgramFail(Parser, "integer value expected");
     
         Result = ExpressionCoerceInteger(Val);
         VariableStackPop(Parser, Val);

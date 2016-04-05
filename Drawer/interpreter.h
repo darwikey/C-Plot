@@ -6,7 +6,7 @@
 #define INTERPRETER_H
 
 #include "platform.h"
-
+#include <string>
 
 /* handy definitions */
 #ifndef TRUE
@@ -28,7 +28,6 @@
 
 /* for debugging */
 #define PRINT_SOURCE_POS ({ PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos); PlatformPrintf(Parser->pc, "\n"); })
-#define PRINT_TYPE(typ) PlatformPrintf(Parser->pc, "%t\n", typ);
 
 /* small processors use a simplified FILE * for stdio, otherwise use the system FILE * */
 #ifdef BUILTIN_MINI_STDLIB
@@ -576,7 +575,7 @@ void PrintSimpleInt(long Num, IOFILE *Stream);
 void PrintInt(long Num, int FieldWidth, int ZeroPad, int LeftJustify, IOFILE *Stream);
 void PrintStr(const char *Str, IOFILE *Stream);
 void PrintFP(double Num, IOFILE *Stream);
-void PrintType(struct ValueType *Typ, IOFILE *Stream);
+void PrintType(struct ValueType *Typ, Picoc* pc);
 void LibPrintf(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 
 /* platform.c */
@@ -606,6 +605,7 @@ void IncludeInit(Picoc *pc);
 void IncludeCleanup(Picoc *pc);
 void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, const char *SetupCSource);
 void IncludeFile(Picoc *pc, char *Filename);
+void GetBuiltInFunction(std::string& list);
 /* the following is defined in picoc.h:
  * void PicocIncludeAllSystemHeaders(); */
  

@@ -201,7 +201,7 @@ void TypeParseStruct(struct ParseState *Parser, struct ValueType **Typ, int IsSt
 
     *Typ = TypeGetMatching(pc, Parser, &Parser->pc->UberType, IsStruct ? TypeStruct : TypeUnion, 0, StructIdentifier, TRUE);
     if (Token == TokenLeftBrace && (*Typ)->Members != NULL)
-        ProgramFail(Parser, "data type '%t' is already defined", *Typ);
+        ProgramFail(Parser, "data type is already defined");
 
     Token = LexGetToken(Parser, NULL, FALSE);
     if (Token != TokenLeftBrace)

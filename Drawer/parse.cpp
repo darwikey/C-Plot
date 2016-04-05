@@ -183,7 +183,7 @@ int ParseArrayInitialiser(struct ParseState *Parser, struct Value *NewVariable, 
         NumElements = ParseArrayInitialiser(&CountParser, NewVariable, FALSE);
 
         if (NewVariable->Typ->Base != TypeArray)
-            AssignFail(Parser, "%t from array initializer", NewVariable->Typ, NULL, 0, 0, NULL, 0);
+            AssignFail(Parser, " from array initializer", NewVariable->Typ, NULL, 0, 0, NULL, 0);
 
         if (NewVariable->Typ->ArraySize == 0)
         {
@@ -629,7 +629,7 @@ enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemi
                             
                             #if 0
                             PRINT_SOURCE_POS;
-                            PlatformPrintf(Parser->pc, "%t %s = %d;\n", CValue->Typ, Identifier, CValue->Val->Integer);
+                            PlatformPrintf(Parser->pc, "%s = %d;\n", Identifier, CValue->Val->Integer);
                             printf("%d\n", VariableDefined(Parser->pc, Identifier));
                             #endif
                             VariableDefine(Parser->pc, Parser, Identifier, CValue, CValue->Typ, TRUE);

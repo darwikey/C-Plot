@@ -115,4 +115,23 @@ void IncludeFile(Picoc *pc, char *FileName)
     //PicocPlatformScanFile(pc, FileName);
 }
 
+void GetBuiltInFunction(std::string& list, LibraryFunction* lib)
+{
+	for (int Count = 0; lib[Count].Prototype != NULL; Count++)
+	{
+		list.append(lib[Count].Prototype);
+		list.push_back('\n');
+	}
+}
+
+void GetBuiltInFunction(std::string& list)
+{
+	GetBuiltInFunction(list, MathFunctions);
+	GetBuiltInFunction(list, StdCtypeFunctions);
+	GetBuiltInFunction(list, StdioFunctions);
+	GetBuiltInFunction(list, StdlibFunctions);
+	GetBuiltInFunction(list, StringFunctions);
+	GetBuiltInFunction(list, StdTimeFunctions);
+}
+
 #endif /* NO_HASH_INCLUDE */

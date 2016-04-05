@@ -15,6 +15,12 @@ std::vector<sf::Vector2f> points;
 sf::FloatRect graphRect(-10.f, -10.f, 20.f, 20.f);
 sf::Text errorMessage;
 float progression = 0.f;
+bool showFunctionList = false;
+
+void showBuiltInFunctions(tgui::Gui& gui);
+void loadWidgets(tgui::Gui& gui);
+std::vector<float> computeAxisGraduation(float min, float max);
+
 
 void execute()
 {
@@ -61,93 +67,10 @@ void execute()
 	}
 }
 
-void callbackTextEdit(tgui::TextBox::Ptr source)
-{
-	mutex.lock();
-	sourceCode = source->getText().toAnsiString();
-	mutex.unlock();
-}
-
-void loadWidgets(tgui::Gui& gui)
-{
-	// Load the black theme
-	auto theme = std::make_shared<tgui::Theme>();// "TGUI/widgets/Black.txt");
-
-	// Get a bound version of the window size
-	// Passing this to setPosition or setSize will make the widget automatically update when the view of the gui changes
-	auto windowWidth = tgui::bindWidth(gui);
-	auto windowHeight = tgui::bindHeight(gui);
-
-
-	// Create the username edit box
-	tgui::TextBox::Ptr editBox = theme->load("TextBox");
-	editBox->setSize(windowWidth * 0.25f, windowHeight - 200);
-	editBox->setPosition(10, 30);
-	editBox->setText("double main(double x){\n\nreturn x;\n}");
-	gui.add(editBox, "Code");
-
-	editBox->connect("TextChanged", callbackTextEdit, editBox);
-	callbackTextEdit(editBox);
-
-	//// Create the login button
-	//tgui::Button::Ptr button = theme->load("Button");
-	//button->setSize(windowWidth * 0.25f, 50);
-	//button->setPosition(10, windowHeight -150);
-	//button->setText("Launch");
-	//gui.add(button);
-
-	//// Call the login function when the button is pressed
-	//button->connect("pressed", launch, editBox);
-	errorMessage.setFont(*gui.getFont());
-	errorMessage.setCharacterSize(13);
-	errorMessage.setColor(sf::Color::Red);
-}
-
-std::vector<float> computeAxisGraduation(float min, float max)
-{
-	float delta = max - min;
-	const static double mul[] = { 1.0, 2.0, 5.0 };
-	std::vector<float> axis;
-
-	bool ok = false;
-	double step = FLT_MAX;
-	for (int e = -7; e < 9; e++)
-	{
-		double a = pow(10.0, e);
-
-		for (int i = 0; i < 3; i++)
-		{
-			double b = a * mul[i];
-
-			if (delta / b <= 10)
-			{
-				step = b;
-				ok = true;
-				break;
-			}
-		}
-		if (ok)
-		{
-			break;
-		}
-	}
-
-	double i = floor(min / step) * step;
-	for (; i < max+0.1*step; i += step)
-	{
-		if (abs(i) > 1e-9)
-		{
-			axis.push_back((float)i);
-		}
-	}
-
-	return axis;
-}
-
 int main()
 {
 	// Create the window
-	sf::RenderWindow window(sf::VideoMode(1000, 700), "TGUI window");
+	sf::RenderWindow window(sf::VideoMode(1000, 700), "C-Plot");
 	window.setFramerateLimit(60);
 	tgui::Gui gui(window);
 
@@ -249,57 +172,64 @@ int main()
 		// Curve
 		sf::FloatRect graphScreen(gui.getSize().x * 0.25f + 30.f, 100.f, gui.getSize().x * 0.65f, gui.getSize().y - 200.f);
 
-		std::vector<sf::Vertex> lines;
-		mutex.lock();
-		for (sf::Vector2f p : points)
+		if (showFunctionList)
 		{
-			p.x = (p.x - graphRect.left) / graphRect.width;
-			p.y = (p.y - graphRect.top) / graphRect.height;
-			lines.push_back(sf::Vector2f(graphScreen.left + p.x * graphScreen.width, graphScreen.top + (1.f-p.y) * graphScreen.height));
+			showBuiltInFunctions(gui);
 		}
-		mutex.unlock();
-		window.draw(lines.data(), lines.size(), sf::LinesStrip);
-
-		// Axis
-		std::vector<sf::Vertex> axis;
-		// horizontal
-		float middleY = 1.f + graphRect.top / graphRect.height;
-		lines.push_back(sf::Vector2f(graphScreen.left, graphScreen.top + middleY*graphScreen.height));
-		lines.push_back(sf::Vector2f(graphScreen.left+graphScreen.width, graphScreen.top + middleY*graphScreen.height));
-		//vertical
-		float middleX = -graphRect.left / graphRect.width;
-		lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top));
-		lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top+graphScreen.height));
-
-		std::vector<float> graduation = computeAxisGraduation(graphRect.left, graphRect.left + graphRect.width);
-		const float graduationSize = 2.f;
-		for (float x : graduation)
+		else
 		{
-			char str[32];
-			sprintf_s<32>(str, "%g", x);
-			sf::Text text(str, *gui.getFont(), 12);
-			x = (x - graphRect.left) / graphRect.width;
-			text.setPosition(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize);
-			window.draw(text);
+			std::vector<sf::Vertex> lines;
+			mutex.lock();
+			for (sf::Vector2f p : points)
+			{
+				p.x = (p.x - graphRect.left) / graphRect.width;
+				p.y = (p.y - graphRect.top) / graphRect.height;
+				lines.push_back(sf::Vector2f(graphScreen.left + p.x * graphScreen.width, graphScreen.top + (1.f - p.y) * graphScreen.height));
+			}
+			mutex.unlock();
+			window.draw(lines.data(), lines.size(), sf::LinesStrip);
 
-			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height + graduationSize));
-			lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize));
+			// Axis
+			std::vector<sf::Vertex> axis;
+			// horizontal
+			float middleY = 1.f + graphRect.top / graphRect.height;
+			lines.push_back(sf::Vector2f(graphScreen.left, graphScreen.top + middleY*graphScreen.height));
+			lines.push_back(sf::Vector2f(graphScreen.left + graphScreen.width, graphScreen.top + middleY*graphScreen.height));
+			//vertical
+			float middleX = -graphRect.left / graphRect.width;
+			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top));
+			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width, graphScreen.top + graphScreen.height));
+
+			std::vector<float> graduation = computeAxisGraduation(graphRect.left, graphRect.left + graphRect.width);
+			const float graduationSize = 2.f;
+			for (float x : graduation)
+			{
+				char str[32];
+				sprintf_s<32>(str, "%g", x);
+				sf::Text text(str, *gui.getFont(), 12);
+				x = (x - graphRect.left) / graphRect.width;
+				text.setPosition(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize);
+				window.draw(text);
+
+				lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height + graduationSize));
+				lines.push_back(sf::Vector2f(graphScreen.left + x * graphScreen.width, graphScreen.top + middleY*graphScreen.height - graduationSize));
+			}
+
+			graduation = computeAxisGraduation(graphRect.top, graphRect.top + graphRect.height);
+			for (float y : graduation)
+			{
+				char str[32];
+				sprintf_s<32>(str, "%g", y);
+				sf::Text text(str, *gui.getFont(), 12);
+				y = (y - graphRect.top) / graphRect.height;
+				text.setPosition(graphScreen.left + middleX*graphScreen.width + graduationSize + 1.f, graphScreen.top + (1.f - y) * graphScreen.height - 5.f);
+				window.draw(text);
+
+				lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
+				lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
+			}
+			window.draw(lines.data(), lines.size(), sf::Lines);
 		}
-
-		graduation = computeAxisGraduation(graphRect.top, graphRect.top + graphRect.height);
-		for (float y : graduation)
-		{
-			char str[32];
-			sprintf_s<32>(str, "%g", y);
-			sf::Text text(str, *gui.getFont(), 12);
-			y = (y - graphRect.top) / graphRect.height;
-			text.setPosition(graphScreen.left + middleX*graphScreen.width + graduationSize + 1.f, graphScreen.top + (1.f - y) * graphScreen.height - 5.f);
-			window.draw(text);
-
-			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width + graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
-			lines.push_back(sf::Vector2f(graphScreen.left + middleX*graphScreen.width - graduationSize, graphScreen.top + (1.f - y) * graphScreen.height));
-		}
-		window.draw(lines.data(), lines.size(), sf::Lines);
 
 		// Display messages
 		mutex.lock();
@@ -320,4 +250,119 @@ int main()
 
 	thread.detach();
 	return EXIT_SUCCESS;
+}
+
+
+void callbackTextEdit(tgui::TextBox::Ptr source)
+{
+	mutex.lock();
+	sourceCode = source->getText().toAnsiString();
+	mutex.unlock();
+}
+
+void showBuiltInFunctions(tgui::Gui& gui)
+{
+	std::string list;
+	GetBuiltInFunction(list);
+	const char* str = list.c_str();
+
+	sf::Text text("", *gui.getFont(), 12);
+	text.setPosition(gui.getSize().x * 0.25f + 30.f, 30.f);
+	text.setColor(sf::Color::White);
+
+	const char* strEnd = str + list.length();
+
+	for (const char* splitEnd = str; splitEnd != strEnd; ++splitEnd)
+	{
+		if (*splitEnd == '\n')
+		{
+			const ptrdiff_t splitLen = splitEnd - str;
+			text.setString(std::string(str, splitLen));
+			str = splitEnd + 1;
+
+			sf::Vector2f pos = text.getPosition();
+			pos.y += 15.f;
+			if (pos.y > gui.getSize().y - 50)
+			{
+				pos = sf::Vector2f(pos.x + 250.f, 30.f);
+			}
+			text.setPosition(pos);
+			gui.getWindow()->draw(text);
+		}
+	}
+}
+
+void loadWidgets(tgui::Gui& gui)
+{
+	// Load the black theme
+	auto theme = std::make_shared<tgui::Theme>();// "TGUI/widgets/Black.txt");
+
+	auto windowWidth = tgui::bindWidth(gui);
+	auto windowHeight = tgui::bindHeight(gui);
+
+
+	// Create the username edit box
+	tgui::TextBox::Ptr editBox = theme->load("TextBox");
+	editBox->setSize(windowWidth * 0.25f, windowHeight - 200);
+	editBox->setPosition(10, 30);
+	editBox->setText("double main(double x){\n\nreturn x;\n}");
+	gui.add(editBox, "Code");
+
+	editBox->connect("TextChanged", callbackTextEdit, editBox);
+	callbackTextEdit(editBox);
+
+	// Create the login button
+	tgui::Button::Ptr button = theme->load("Button");
+	button->setSize(windowWidth * 0.25f, 25);
+	button->setPosition(10, windowHeight -150);
+	button->setText("Show built-in functions");
+	gui.add(button);
+	button->connect("pressed", [] {
+		showFunctionList = !showFunctionList;
+	});
+
+	errorMessage.setFont(*gui.getFont());
+	errorMessage.setCharacterSize(13);
+	errorMessage.setColor(sf::Color::Red);
+}
+
+std::vector<float> computeAxisGraduation(float min, float max)
+{
+	float delta = max - min;
+	const static double mul[] = { 1.0, 2.0, 5.0 };
+	std::vector<float> axis;
+
+	bool ok = false;
+	double step = FLT_MAX;
+	for (int e = -7; e < 9; e++)
+	{
+		double a = pow(10.0, e);
+
+		for (int i = 0; i < 3; i++)
+		{
+			double b = a * mul[i];
+
+			if (delta / b <= 10)
+			{
+				step = b;
+				ok = true;
+				break;
+			}
+		}
+		if (ok)
+		{
+			break;
+		}
+	}
+
+	double i = floor(min / step) * step;
+	for (; i < max + 0.1*step; i += step)
+	{
+		if (abs(i) > 1e-9)
+		{
+			axis.push_back((float)i);
+		}
+	}
+
+	return axis;
 }

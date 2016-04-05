@@ -151,8 +151,13 @@ void AssignFail(struct ParseState *Parser, const char *Format, struct ValueType 
     PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
     PlatformPrintf(Parser->pc, "can't %s ", (FuncName == NULL) ? "assign" : "set");   
         
-    if (Type1 != NULL)
-        PlatformPrintf(Parser->pc, Format, Type1, Type2);
+	if (Type1 != NULL)
+	{
+		PrintType(Type1, Parser->pc);
+		PlatformPrintf(Parser->pc, Format);
+		if (Type2 != NULL)
+			PrintType(Type2, Parser->pc);
+	}
     else
         PlatformPrintf(Parser->pc, Format, Num1, Num2);
     

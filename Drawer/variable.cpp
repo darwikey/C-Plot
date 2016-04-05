@@ -293,7 +293,7 @@ struct Value *VariableDefineButIgnoreIdentical(struct ParseState *Parser, char *
     
     /* is the type a forward declaration? */
     if (TypeIsForwardDeclared(Parser, Typ))
-        ProgramFail(Parser, "type '%t' isn't defined", Typ);
+        ProgramFail(Parser, "type isn't defined");
 
     if (IsStatic)
     {
