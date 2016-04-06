@@ -130,6 +130,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Application.cpp" />
     <ClCompile Include="clibrary.cpp" />
     <ClCompile Include="cstdlib\ctype.cpp" />
     <ClCompile Include="cstdlib\errno.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="variable.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Application.h" />
     <ClInclude Include="interpreter.h" />
     <ClInclude Include="picoc.h" />
     <ClInclude Include="platform.h" />
