@@ -251,6 +251,10 @@ void Application::showGraph()
 		float yGraph = convertGraphCoordToScreen(sf::Vector2f(0.f, y)).y;
 		text.setPosition(sf::Mouse::getPosition(mWindow).x, yGraph);
 		mWindow.draw(text);
+		sf::RectangleShape rect(sf::Vector2f(3.f,3.f));
+		rect.setPosition(sf::Mouse::getPosition(mWindow).x - 1.5f, yGraph - 1.5f);
+		rect.setFillColor(sf::Color(128,128,255));
+		mWindow.draw(rect);
 	}
 }
 
