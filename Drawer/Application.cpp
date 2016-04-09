@@ -154,7 +154,7 @@ void Application::execute()
 		float width = mGraphRect.width;
 		float start = mGraphRect.left;
 		std::string buffer = mSourceCode;
-		bool polarCoordinate = mPolarCoordinate;
+		enumCoordinate coordinate = mCoordinate;
 		mMutex.unlock();
 		int isCrash = 0;
 
@@ -162,13 +162,13 @@ void Application::execute()
 		{
 			double x = (double)i / NUM_POINTS;
 			mProgression = (float)x;
-			if (polarCoordinate)
+			if (coordinate == CARTESIAN)
 			{
-				x *= 6.283185307179586;
+				x = x * width + start;
 			}
 			else
 			{
-				x = x * width + start;
+				x *= 6.283185307179586;
 			}
 
 			float y = (float)parse(buffer.c_str(), x, &isCrash, errorBuffer);
@@ -185,7 +185,7 @@ void Application::execute()
 		//std::cout << std::endl;
 
 		mMutex.lock();
-		if (polarCoordinate == mPolarCoordinate)
+		if (coordinate == mCoordinate)
 		{
 			mPoints = result;
 		}
@@ -204,13 +204,13 @@ void Application::showGraph()
 	mMutex.lock();
 	for (const sf::Vector2f& p : mPoints)
 	{
-		if (mPolarCoordinate)
+		if (mCoordinate == CARTESIAN)
 		{
-			sf::Vector2f p(p.y * cos(p.x), p.y * sin(p.x));
 			lines.push_back(convertGraphCoordToScreen(p));
 		}
-		else // cartesian coordinate
+		else // polar coordinate
 		{
+			sf::Vector2f p(p.y * cos(p.x), p.y * sin(p.x));
 			lines.push_back(convertGraphCoordToScreen(p));
 		}
 	}
@@ -263,7 +263,7 @@ void Application::showGraph()
 	
 	if (mouse.x >= mGraphRect.left && mouse.x <= mGraphRect.left + mGraphRect.width)
 	{
-		if (mPolarCoordinate)
+		if (mCoordinate == POLAR)
 		{
 			mouse.x = atan2(mouse.y, mouse.x);
 			if (mouse.x < 0)
@@ -275,12 +275,12 @@ void Application::showGraph()
 		sprintf_s<64>(str, "(%g, %g)", mouse.x, y);
 		sf::Text text(str, *mGui.getFont(), 12);
 		sf::Vector2f textPos;
-		if (!mPolarCoordinate)
+		if (mCoordinate == CARTESIAN)
 		{
 			textPos = convertGraphCoordToScreen(sf::Vector2f(0.f, y));
 			textPos.x = (float)sf::Mouse::getPosition(mWindow).x;
 		}
-		else
+		else // polar coordinate
 		{
 			textPos = sf::Vector2f(y * cos(mouse.x), y * sin(mouse.x));
 			textPos = convertGraphCoordToScreen(textPos);
@@ -371,7 +371,7 @@ void Application::loadWidgets()
 	mGui.add(coordinateBox);
 	coordinateBox->connect("ItemSelected", [this](tgui::ComboBox::Ptr box) {
 		mPoints.clear();
-		mPolarCoordinate = box->getSelectedItemIndex();
+		mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
 	}, coordinateBox);
 
 	mErrorMessage.setFont(*mGui.getFont());

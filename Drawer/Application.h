@@ -7,6 +7,12 @@
 #include <thread>
 #include <chrono>
 
+enum enumCoordinate
+{
+	CARTESIAN,
+	POLAR,
+	THREE_D
+};
 
 class Application
 {
@@ -38,6 +44,6 @@ private:
 	sf::Text mErrorMessage;
 	float mProgression = 0.f;
 	bool mShowFunctionList = false;
-	bool mPolarCoordinate = false;
+	enumCoordinate mCoordinate = CARTESIAN;
 
 };
