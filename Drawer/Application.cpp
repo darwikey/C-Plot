@@ -191,14 +191,13 @@ void Application::showGraph()
 {
 	std::vector<sf::Vertex> lines;
 	mMutex.lock();
-	for (sf::Vector2f p : mPoints)
+	for (const sf::Vector2f& p : mPoints)
 	{
-		p.x = (p.x - mGraphRect.left) / mGraphRect.width;
-		p.y = (p.y - mGraphRect.top) / mGraphRect.height;
-		lines.push_back(sf::Vector2f(mGraphScreen.left + p.x * mGraphScreen.width, mGraphScreen.top + (1.f - p.y) * mGraphScreen.height));
+		lines.push_back(convertGraphCoordToScreen(p));
 	}
 	mMutex.unlock();
 	mGui.getWindow()->draw(lines.data(), lines.size(), sf::LinesStrip);
+	lines.clear();
 
 	// Axis
 	std::vector<sf::Vertex> axis;
@@ -234,12 +233,25 @@ void Application::showGraph()
 		sf::Text text(str, *mGui.getFont(), 12);
 		y = (y - mGraphRect.top) / mGraphRect.height;
 		text.setPosition(mGraphScreen.left + middleX*mGraphScreen.width + graduationSize + 1.f, mGraphScreen.top + (1.f - y) * mGraphScreen.height - 5.f);
-		mGui.getWindow()->draw(text);
+		mWindow.draw(text);
 
 		lines.push_back(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width + graduationSize, mGraphScreen.top + (1.f - y) * mGraphScreen.height));
 		lines.push_back(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width - graduationSize, mGraphScreen.top + (1.f - y) * mGraphScreen.height));
 	}
-	mGui.getWindow()->draw(lines.data(), lines.size(), sf::Lines);
+	mWindow.draw(lines.data(), lines.size(), sf::Lines);
+
+	sf::Vector2f mouse = convertScreenCoordToGraph(sf::Vector2f(sf::Mouse::getPosition(mWindow).x, sf::Mouse::getPosition(mWindow).y));
+	
+	if (mouse.x >= mGraphRect.left && mouse.x <= mGraphRect.left + mGraphRect.width)
+	{
+		float y = getAccurateYValue(mouse.x);
+		char str[64];
+		sprintf_s<64>(str, "(%g, %g)", mouse.x, y);
+		sf::Text text(str, *mGui.getFont(), 12);
+		float yGraph = convertGraphCoordToScreen(sf::Vector2f(0.f, y)).y;
+		text.setPosition(sf::Mouse::getPosition(mWindow).x, yGraph);
+		mWindow.draw(text);
+	}
 }
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
@@ -315,7 +327,19 @@ void Application::loadWidgets()
 	mErrorMessage.setColor(sf::Color::Red);
 }
 
-std::vector<float> Application::computeAxisGraduation(float min, float max)
+sf::Vector2f Application::convertGraphCoordToScreen(const sf::Vector2f& point) const
+{
+	sf::Vector2f p((point.x - mGraphRect.left) / mGraphRect.width, (point.y - mGraphRect.top) / mGraphRect.height);
+	return sf::Vector2f(mGraphScreen.left + p.x * mGraphScreen.width, mGraphScreen.top + (1.f - p.y) * mGraphScreen.height);
+}
+
+sf::Vector2f Application::convertScreenCoordToGraph(const sf::Vector2f& point) const
+{
+	sf::Vector2f p((point.x - mGraphScreen.left) / mGraphScreen.width, (point.y - mGraphScreen.top) / mGraphScreen.height);
+	return sf::Vector2f(p.x * mGraphRect.width + mGraphRect.left, (1.f-p.y) * mGraphRect.height + mGraphRect.top);
+}
+
+std::vector<float> Application::computeAxisGraduation(float min, float max) const
 {
 	float delta = max - min;
 	const static double mul[] = { 1.0, 2.0, 5.0 };
@@ -354,4 +378,27 @@ std::vector<float> Application::computeAxisGraduation(float min, float max)
 	}
 
 	return axis;
+}
+
+float Application::getAccurateYValue(float x) const
+{
+	if (mPoints.size() < 2)
+		return 0.f;
+
+	sf::Lock lock(mMutex);
+
+	sf::Vector2f p0 = mPoints[0];
+	sf::Vector2f p1 = mPoints[1];
+	for (unsigned i = 1; i < mPoints.size(); i++)
+	{
+		if (mPoints[i].x > x)
+		{
+			p0 = mPoints[i-1];
+			p1 = mPoints[i];
+			break;
+		}
+	}
+
+	float a = (x - p0.x) / (p1.x - p0.x);
+	return a * (p1.y - p0.y) + p0.y;
 }

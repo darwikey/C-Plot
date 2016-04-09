@@ -21,13 +21,16 @@ private:
 	void callbackTextEdit(tgui::TextBox::Ptr source);
 	void showBuiltInFunctions();
 	void loadWidgets();
-	std::vector<float> computeAxisGraduation(float min, float max);
+	sf::Vector2f convertGraphCoordToScreen(const sf::Vector2f& point) const;
+	sf::Vector2f convertScreenCoordToGraph(const sf::Vector2f& point) const;
+	std::vector<float> computeAxisGraduation(float min, float max) const;
+	float getAccurateYValue(float x) const;
 
 
 	sf::RenderWindow mWindow;
 	tgui::Gui mGui;
 	std::thread mThread;
-	sf::Mutex mMutex;
+	mutable sf::Mutex mMutex;
 	std::string mSourceCode;
 	std::vector<sf::Vector2f> mPoints;
 	sf::FloatRect mGraphRect = sf::FloatRect(-10.f, -10.f, 20.f, 20.f);
