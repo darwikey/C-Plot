@@ -154,6 +154,7 @@ void Application::execute()
 		float width = mGraphRect.width;
 		float start = mGraphRect.left;
 		std::string buffer = mSourceCode;
+		bool polarCoordinate = mPolarCoordinate;
 		mMutex.unlock();
 		int isCrash = 0;
 
@@ -161,7 +162,14 @@ void Application::execute()
 		{
 			double x = (double)i / NUM_POINTS;
 			mProgression = (float)x;
-			x = x * width + start;
+			if (polarCoordinate)
+			{
+				x *= 6.283185307179586;
+			}
+			else
+			{
+				x = x * width + start;
+			}
 
 			float y = (float)parse(buffer.c_str(), x, &isCrash, errorBuffer);
 			if (isCrash)
@@ -177,7 +185,10 @@ void Application::execute()
 		//std::cout << std::endl;
 
 		mMutex.lock();
-		mPoints = result;
+		if (polarCoordinate == mPolarCoordinate)
+		{
+			mPoints = result;
+		}
 		if (isCrash)
 			mErrorMessage.setString(errorBuffer);
 		else
@@ -193,7 +204,15 @@ void Application::showGraph()
 	mMutex.lock();
 	for (const sf::Vector2f& p : mPoints)
 	{
-		lines.push_back(convertGraphCoordToScreen(p));
+		if (mPolarCoordinate)
+		{
+			sf::Vector2f p(p.y * cos(p.x), p.y * sin(p.x));
+			lines.push_back(convertGraphCoordToScreen(p));
+		}
+		else // cartesian coordinate
+		{
+			lines.push_back(convertGraphCoordToScreen(p));
+		}
 	}
 	mMutex.unlock();
 	mGui.getWindow()->draw(lines.data(), lines.size(), sf::LinesStrip);
@@ -240,19 +259,36 @@ void Application::showGraph()
 	}
 	mWindow.draw(lines.data(), lines.size(), sf::Lines);
 
-	sf::Vector2f mouse = convertScreenCoordToGraph(sf::Vector2f(sf::Mouse::getPosition(mWindow).x, sf::Mouse::getPosition(mWindow).y));
+	sf::Vector2f mouse = convertScreenCoordToGraph(sf::Vector2f((float)sf::Mouse::getPosition(mWindow).x, (float)sf::Mouse::getPosition(mWindow).y));
 	
 	if (mouse.x >= mGraphRect.left && mouse.x <= mGraphRect.left + mGraphRect.width)
 	{
+		if (mPolarCoordinate)
+		{
+			mouse.x = atan2(mouse.y, mouse.x);
+			if (mouse.x < 0)
+				mouse.x += 6.283185307179586f;
+		}
+
 		float y = getAccurateYValue(mouse.x);
 		char str[64];
 		sprintf_s<64>(str, "(%g, %g)", mouse.x, y);
 		sf::Text text(str, *mGui.getFont(), 12);
-		float yGraph = convertGraphCoordToScreen(sf::Vector2f(0.f, y)).y;
-		text.setPosition(sf::Mouse::getPosition(mWindow).x, yGraph);
+		sf::Vector2f textPos;
+		if (!mPolarCoordinate)
+		{
+			textPos = convertGraphCoordToScreen(sf::Vector2f(0.f, y));
+			textPos.x = (float)sf::Mouse::getPosition(mWindow).x;
+		}
+		else
+		{
+			textPos = sf::Vector2f(y * cos(mouse.x), y * sin(mouse.x));
+			textPos = convertGraphCoordToScreen(textPos);
+		}
+		text.setPosition(textPos);
 		mWindow.draw(text);
 		sf::RectangleShape rect(sf::Vector2f(3.f,3.f));
-		rect.setPosition(sf::Mouse::getPosition(mWindow).x - 1.5f, yGraph - 1.5f);
+		rect.setPosition(textPos.x - 1.5f, textPos.y - 1.5f);
 		rect.setFillColor(sf::Color(128,128,255));
 		mWindow.draw(rect);
 	}
@@ -324,6 +360,20 @@ void Application::loadWidgets()
 	mGui.add(button);
 	button->connect("pressed", [this] {
 		mShowFunctionList = !mShowFunctionList;
+	});
+
+	tgui::CheckBox::Ptr coordinateBox = theme->load("CheckBox");
+	coordinateBox->setSize(20, 20);
+	coordinateBox->setPosition(windowWidth * 0.25f + 60.f, 10.f);
+	coordinateBox->setText("Polar coordinates");
+	mGui.add(coordinateBox);
+	coordinateBox->connect("checked", [this]() {
+		mPoints.clear();
+		mPolarCoordinate = true;
+	});
+	coordinateBox->connect("unchecked", [this]() {
+		mPoints.clear();
+		mPolarCoordinate = false;
 	});
 
 	mErrorMessage.setFont(*mGui.getFont());

@@ -38,5 +38,6 @@ private:
 	sf::Text mErrorMessage;
 	float mProgression = 0.f;
 	bool mShowFunctionList = false;
+	bool mPolarCoordinate = false;
 
 };
