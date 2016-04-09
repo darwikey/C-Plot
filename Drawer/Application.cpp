@@ -362,19 +362,17 @@ void Application::loadWidgets()
 		mShowFunctionList = !mShowFunctionList;
 	});
 
-	tgui::CheckBox::Ptr coordinateBox = theme->load("CheckBox");
-	coordinateBox->setSize(20, 20);
+	tgui::ComboBox::Ptr coordinateBox = theme->load("ComboBox");
+	coordinateBox->setSize(170, 20);
 	coordinateBox->setPosition(windowWidth * 0.25f + 60.f, 10.f);
-	coordinateBox->setText("Polar coordinates");
+	coordinateBox->addItem("Cartesian coordinates");
+	coordinateBox->addItem("Polar coordinates");
+	coordinateBox->setSelectedItemByIndex(0);
 	mGui.add(coordinateBox);
-	coordinateBox->connect("checked", [this]() {
+	coordinateBox->connect("ItemSelected", [this](tgui::ComboBox::Ptr box) {
 		mPoints.clear();
-		mPolarCoordinate = true;
-	});
-	coordinateBox->connect("unchecked", [this]() {
-		mPoints.clear();
-		mPolarCoordinate = false;
-	});
+		mPolarCoordinate = box->getSelectedItemIndex();
+	}, coordinateBox);
 
 	mErrorMessage.setFont(*mGui.getFont());
 	mErrorMessage.setCharacterSize(13);
