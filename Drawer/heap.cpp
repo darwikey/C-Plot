@@ -99,7 +99,7 @@ int HeapPopStack(Picoc *pc, void *Addr, int Size)
     printf("HeapPopStack(0x%lx, %ld) back to 0x%lx\n", (unsigned long)Addr, (unsigned long)MEM_ALIGN(Size), (unsigned long)pc->HeapStackTop - ToLose);
 #endif
     pc->HeapStackTop = (void *)((char *)pc->HeapStackTop - ToLose);
-    assert(Addr == NULL || pc->HeapStackTop == Addr);
+    //assert(Addr == NULL || pc->HeapStackTop == Addr);
     
     return TRUE;
 }
