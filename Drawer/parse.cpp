@@ -126,7 +126,7 @@ struct Value *ParseFunctionDefinition(struct ParseState *Parser, struct ValueTyp
         if ( FuncValue->Val->FuncDef.ReturnType != &pc->FPType )
             ProgramFail(Parser, "main() should return a double");
 
-        if (FuncValue->Val->FuncDef.NumParams != 1 || FuncValue->Val->FuncDef.ParamType[0] != &pc->FPType)
+        if (FuncValue->Val->FuncDef.NumParams == 0 || FuncValue->Val->FuncDef.ParamType[0] != &pc->FPType)
             ProgramFail(Parser, "bad parameters to main()");
     }
     

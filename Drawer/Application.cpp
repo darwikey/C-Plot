@@ -2,12 +2,38 @@
 #include "picoc.h"
 
 #define NUM_POINTS 1024
+#define CURVE_WIDTH 32
 
 void Application::init()
 {
 	// Create the window
-	mWindow.create(sf::VideoMode(1000, 700), "C-Plot");
+	mWindow.create(sf::VideoMode(1000, 700), "C-Plot", 7, sf::ContextSettings(8, 8, 8));
 	mWindow.setFramerateLimit(60);
+
+	mWindow.setActive();
+
+	// Enable Z-buffer read and write
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(GL_TRUE);
+	glClearDepth(1.f);
+
+	// Disable lighting
+	glDisable(GL_LIGHTING);
+
+	// Configure the viewport (the same size as the window)
+	glViewport(mWindow.getSize().x * 0.25f, 0, mWindow.getSize().x*0.75f, mWindow.getSize().y);
+
+	// Setup a perspective projection
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	GLfloat ratio = static_cast<float>(mWindow.getSize().x) / mWindow.getSize().y;
+	glFrustum(-ratio, ratio, -1.f, 1.f, 1.f, 500.f);
+
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_COLOR_ARRAY);
+
 	mGui.setWindow(mWindow);
 
 	try
@@ -33,6 +59,7 @@ int Application::main()
 	bool drag = false;
 	sf::Vector2f dragPosition;
 	sf::Vector2i dragMousePosition;
+
 	while (mWindow.isOpen())
 	{
 		//***************************************************
@@ -50,6 +77,7 @@ int Application::main()
 			{
 				mWindow.setView(sf::View(sf::FloatRect(0, 0, (float)event.size.width, (float)event.size.height)));
 				mGui.setView(mWindow.getView());
+				glViewport(0, 0, event.size.width, event.size.height);
 			}
 
 			// Pass the event to all the widgets
@@ -107,6 +135,7 @@ int Application::main()
 		mWindow.clear();
 
 		// Draw all created widgets
+		mWindow.pushGLStates();
 		mGui.draw();
 
 		// Curve
@@ -115,6 +144,12 @@ int Application::main()
 		if (mShowFunctionList)
 		{
 			showBuiltInFunctions();
+		}
+		else if (mCoordinate == THREE_D)
+		{
+			mWindow.popGLStates();
+			show3DGraph();
+			mWindow.pushGLStates();
 		}
 		else
 		{
@@ -135,6 +170,7 @@ int Application::main()
 		bar.setOutlineColor(sf::Color::Blue);
 		mWindow.draw(bar);
 
+		mWindow.popGLStates();
 		mWindow.display();
 	}
 
@@ -144,65 +180,122 @@ int Application::main()
 
 void Application::execute()
 {
-	std::vector<sf::Vector2f> result;
-	char errorBuffer[1024];
+	std::vector<sf::Vector2f> result2D;
+	std::vector<sf::Vector3f> result3D;
+	
 	while (1)
 	{
-		result.clear();
-
 		mMutex.lock();
-		float width = mGraphRect.width;
-		float start = mGraphRect.left;
-		std::string buffer = mSourceCode;
 		enumCoordinate coordinate = mCoordinate;
 		mMutex.unlock();
-		int isCrash = 0;
 
-		for (int i = 0; i < NUM_POINTS; i++)
+		if (coordinate != THREE_D)
 		{
-			double x = (double)i / NUM_POINTS;
-			mProgression = (float)x;
-			if (coordinate == CARTESIAN)
-			{
-				x = x * width + start;
-			}
-			else
-			{
-				x *= 6.283185307179586;
-			}
-
-			float y = (float)parse(buffer.c_str(), x, &isCrash, errorBuffer);
-			if (isCrash)
-			{
-				break;
-			}
-			//if (i % 30 == 0)
-			//std::cout << "x";
-
-			result.push_back(sf::Vector2f((float)x, y));
+			result2D.clear();
+			evaluate2D(result2D, coordinate);
 		}
-
-		//std::cout << std::endl;
+		else // 3D curve
+		{
+			result3D.clear();
+			evaluate3D(result3D);
+		}
 
 		mMutex.lock();
 		if (coordinate == mCoordinate)
 		{
-			mPoints = result;
+			if (coordinate != THREE_D)
+			{
+				mPoints2D = result2D;
+			}
+			else // 3d curve
+			{
+				mPoints3D = result3D;
+			}
 		}
-		if (isCrash)
-			mErrorMessage.setString(errorBuffer);
-		else
-			mErrorMessage.setString(sf::String());
 		mMutex.unlock();
 		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
+}
+
+void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate)
+{
+	mMutex.lock();
+	float width = mGraphRect.width;
+	float start = mGraphRect.left;
+	std::string buffer = mSourceCode;
+	mMutex.unlock();
+	int isCrash = 0;
+	char errorBuffer[1024];
+
+	for (int i = 0; i < NUM_POINTS; i++)
+	{
+		double x = (double)i / NUM_POINTS;
+		mProgression = (float)x;
+		if (coordinate == CARTESIAN)
+		{
+			x = x * width + start;
+		}
+		else
+		{
+			x *= 6.283185307179586;
+		}
+
+		float y = (float)parse(buffer.c_str(), &x, 1, &isCrash, errorBuffer);
+		if (isCrash)
+		{
+			break;
+		}
+
+		result.push_back(sf::Vector2f((float)x, y));
+	}
+	if (isCrash)
+		mErrorMessage.setString(errorBuffer);
+	else
+		mErrorMessage.setString(sf::String());
+}
+
+void Application::evaluate3D(std::vector<sf::Vector3f>& result)
+{
+	mMutex.lock();
+	float width = mGraphRect.width;
+	float start = mGraphRect.left;
+	std::string buffer = mSourceCode;
+	mMutex.unlock();
+	int isCrash = 0;
+	char errorBuffer[1024];
+
+	double point[2];
+	for (int i = 0; i < CURVE_WIDTH; i++)
+	{
+		double posX = (double)i / CURVE_WIDTH;
+		mProgression = (float)posX;
+		point[0] = posX * width + start;
+
+		for (int j = 0; j < CURVE_WIDTH; j++)
+		{
+			double posY = (double)j / CURVE_WIDTH;
+			point[1] = posY * width + start;
+
+			float z = (float)parse(buffer.c_str(), point, 2, &isCrash, errorBuffer);
+			if (isCrash)
+			{
+				break;
+			}
+
+			result.push_back(sf::Vector3f(1.f * (float)(posX-0.5f), 1.f * (float)(posY-0.5f), z));
+		}
+	}
+	if (isCrash)
+		mErrorMessage.setString(errorBuffer);
+	else
+		mErrorMessage.setString(sf::String());
 }
 
 void Application::showGraph()
 {
 	std::vector<sf::Vertex> lines;
 	mMutex.lock();
-	for (const sf::Vector2f& p : mPoints)
+	for (const sf::Vector2f& p : mPoints2D)
 	{
 		if (mCoordinate == CARTESIAN)
 		{
@@ -294,11 +387,97 @@ void Application::showGraph()
 	}
 }
 
+void Application::show3DGraph()
+{
+	mMutex.lock();
+	if (mPoints3D.empty())
+	{
+		mMutex.unlock();
+		return;
+	}
+
+	// Clear the depth buffer
+	glClear(GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glTranslatef(0.f, 0.f, -4.f);
+	static sf::Clock clock;
+	glRotatef(30.f, -1.f, 1.f, 0.f);
+	glRotatef(clock.getElapsedTime().asSeconds() * 30.f, 0.f, 0.f, 1.f);
+	float scale = 3.f;
+	glScalef(scale, scale, scale);
+
+	std::vector<sf::Vector3f> positions;
+	std::vector<sf::Color> colors;
+
+	float minZ = 0, maxZ = 0;
+	for (const sf::Vector3f& p : mPoints3D)
+	{
+		if (minZ > p.z)
+			minZ = p.z;
+		if (maxZ < p.z)
+			maxZ = p.z;
+	}
+	float deltaZ = 0.f;
+	if (maxZ - minZ > 1e-7f)
+		deltaZ = 1.f / (maxZ - minZ);
+
+	for (int x = 0; x < CURVE_WIDTH-1; x++)
+	{
+		for (int y = 0; y < CURVE_WIDTH-1; y++)
+		{
+			sf::Vector3f p0 = mPoints3D[x * CURVE_WIDTH + y];
+			sf::Vector3f p1 = mPoints3D[(x+1) * CURVE_WIDTH + y];
+			sf::Vector3f p2 = mPoints3D[(x+1) * CURVE_WIDTH + y + 1];
+			sf::Vector3f p3 = mPoints3D[x * CURVE_WIDTH + y + 1];
+			sf::Color c0 = rainbowColor(p0.z = (p0.z - minZ) * deltaZ);
+			sf::Color c1 = rainbowColor(p1.z = (p1.z - minZ) * deltaZ);
+			sf::Color c2 = rainbowColor(p2.z = (p2.z - minZ) * deltaZ);
+			sf::Color c3 = rainbowColor(p3.z = (p3.z - minZ) * deltaZ);
+			p0.z -=  0.5f; p1.z -= 0.5f; p2.z -= 0.5f; p3.z -= 0.5f;
+
+			positions.push_back(p0);
+			positions.push_back(p1);
+			positions.push_back(p2);
+			positions.push_back(p2);
+			positions.push_back(p3);
+			positions.push_back(p0);
+			colors.push_back(c0);
+			colors.push_back(c1);
+			colors.push_back(c2);
+			colors.push_back(c2);
+			colors.push_back(c3);
+			colors.push_back(c0);
+		}
+	}
+	mMutex.unlock();
+
+	glVertexPointer(3, GL_FLOAT, 3 * sizeof(float), positions.data());
+	glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(unsigned char), colors.data());
+
+	glDrawArrays(GL_TRIANGLES, 0, positions.size());
+}
+
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 {
 	mMutex.lock();
 	mSourceCode = source->getText().toAnsiString();
 	mMutex.unlock();
+}
+
+void Application::fillDefaultSourceCode()
+{
+	if (mCoordinate != THREE_D)
+	{
+		mSourceCodeEditBox->setText("double main(double x){\n\nreturn x;\n}");
+	}
+	else
+	{
+		mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn fabs(sin(x*0.5));\n}");
+		//mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn sin(x)*sin(y);\n}");
+	}
+	callbackTextEdit(mSourceCodeEditBox);
 }
 
 void Application::showBuiltInFunctions()
@@ -342,15 +521,15 @@ void Application::loadWidgets()
 	auto windowHeight = tgui::bindHeight(mGui);
 
 
-	// Create the username edit box
-	tgui::TextBox::Ptr editBox = theme->load("TextBox");
-	editBox->setSize(windowWidth * 0.25f, windowHeight - 200);
-	editBox->setPosition(10, 30);
-	editBox->setText("double main(double x){\n\nreturn x;\n}");
-	mGui.add(editBox, "Code");
-
-	editBox->connect("TextChanged", &Application::callbackTextEdit, this, editBox);
-	callbackTextEdit(editBox);
+	// Create the source code edit box
+	mSourceCodeEditBox = theme->load("TextBox");
+	mSourceCodeEditBox->setSize(windowWidth * 0.25f, windowHeight - 200);
+	mSourceCodeEditBox->setPosition(10, 30);
+	mGui.add(mSourceCodeEditBox, "Code");
+	mSourceCodeEditBox->connect("TextChanged", &Application::callbackTextEdit, this, mSourceCodeEditBox);
+	
+	// Apply default source code
+	fillDefaultSourceCode();
 
 	// Create the login button
 	tgui::Button::Ptr button = theme->load("Button");
@@ -367,10 +546,17 @@ void Application::loadWidgets()
 	coordinateBox->setPosition(windowWidth * 0.25f + 60.f, 10.f);
 	coordinateBox->addItem("Cartesian coordinates");
 	coordinateBox->addItem("Polar coordinates");
-	coordinateBox->setSelectedItemByIndex(0);
+	coordinateBox->addItem("3D curve");
+	coordinateBox->setSelectedItemByIndex(mCoordinate);
 	mGui.add(coordinateBox);
 	coordinateBox->connect("ItemSelected", [this](tgui::ComboBox::Ptr box) {
-		mPoints.clear();
+		mPoints2D.clear();
+		mPoints3D.clear();
+		if (mCoordinate != (enumCoordinate)box->getSelectedItemIndex())
+		{
+			mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
+			fillDefaultSourceCode();
+		}
 		mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
 	}, coordinateBox);
 
@@ -434,23 +620,52 @@ std::vector<float> Application::computeAxisGraduation(float min, float max) cons
 
 float Application::getAccurateYValue(float x) const
 {
-	if (mPoints.size() < 2)
+	if (mPoints2D.size() < 2)
 		return 0.f;
 
 	sf::Lock lock(mMutex);
 
-	sf::Vector2f p0 = mPoints[0];
-	sf::Vector2f p1 = mPoints[1];
-	for (unsigned i = 1; i < mPoints.size(); i++)
+	sf::Vector2f p0 = mPoints2D[0];
+	sf::Vector2f p1 = mPoints2D[1];
+	for (unsigned i = 1; i < mPoints2D.size(); i++)
 	{
-		if (mPoints[i].x > x)
+		if (mPoints2D[i].x > x)
 		{
-			p0 = mPoints[i-1];
-			p1 = mPoints[i];
+			p0 = mPoints2D[i-1];
+			p1 = mPoints2D[i];
 			break;
 		}
 	}
 
 	float a = (x - p0.x) / (p1.x - p0.x);
 	return a * (p1.y - p0.y) + p0.y;
+}
+
+//i entre 0 et 1
+sf::Color Application::rainbowColor(float i)
+{
+	if (i < 0.16667f)
+	{
+		return sf::Color(255, 0, i * 6.f*255.f);
+	}
+	else if (i < 0.33333f)
+	{
+		return sf::Color(255.f - (i - 0.166667f) * 6.f * 255.f, 0, 255);
+	}
+	else if (i < 0.5f)
+	{
+		return sf::Color(0, (i - 0.33333f) * 6.f * 255.f, 255);
+	}
+	else if (i < 0.66667f)
+	{
+		return sf::Color(0, 255, 255 - (i - 0.5f) * 6.f * 255.f);
+	}
+	else if (i < 0.83333f)
+	{
+		return sf::Color((i - 0.66667f) * 6.f * 255.f, 255, 0);
+	}
+	else
+	{
+		return sf::Color(255, 255 - (i - 0.83333f) * 6.f * 255.f, 0);
+	}
 }

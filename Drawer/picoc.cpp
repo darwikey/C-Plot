@@ -13,11 +13,10 @@
 
 #define PICOC_STACK_SIZE (128*1024)              /* space for the the stack */
 
-double parse(const char* fCode, double arg, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
+double parse(const char* fCode, double* arg, int paramCount, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
 {
 	*isCrash = 0;
-    int ParamCount = 1;
-    int DontRunMain = FALSE;
+
     int StackSize = getenv("STACKSIZE") ? atoi(getenv("STACKSIZE")) : PICOC_STACK_SIZE;
     Picoc pc;
     
@@ -31,12 +30,6 @@ double parse(const char* fCode, double arg, int* isCrash, char errorBuffer[ERROR
     
     PicocInitialise(&pc, StackSize);
     
-    if (0)//strcmp(argv[ParamCount], "-s") == 0 || strcmp(argv[ParamCount], "-m") == 0)
-    {
-        DontRunMain = TRUE;
-        PicocIncludeAllSystemHeaders(&pc);
-        ParamCount++;
-    }
         
     if (0)//argc > ParamCount && strcmp(argv[ParamCount], "-i") == 0)
     {
@@ -56,8 +49,11 @@ double parse(const char* fCode, double arg, int* isCrash, char errorBuffer[ERROR
         //for (; ParamCount < argc && strcmp(argv[ParamCount], "-") != 0; ParamCount++)
         PicocPlatformScanFile(&pc, fCode);
         
-        if (!DontRunMain)
-			PicocCallMain(&pc, arg);// argc - ParamCount, &argv[ParamCount]);
+		if (paramCount == 1)
+			PicocCallMain(&pc, arg[0]);// argc - ParamCount, &argv[ParamCount]);
+		else if (paramCount == 2)
+			PicocCallMain(&pc, arg[0], arg[1]);
+
     }
     
     PicocCleanup(&pc);

@@ -18,7 +18,7 @@
 
 #include "interpreter.h"
 
-double parse(const char* fCode, double arg, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE]);
+double parse(const char* fCode, double* arg, int paramCount, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE]);
 
 #include <setjmp.h>
 
@@ -39,6 +39,7 @@ void PicocParseInteractive(Picoc *pc);
 
 /* platform.c */
 void PicocCallMain(Picoc *pc, double arg);
+void PicocCallMain(Picoc *pc, double arg1, double arg2);
 void PicocInitialise(Picoc *pc, int StackSize);
 void PicocCleanup(Picoc *pc);
 void PicocPlatformScanFile(Picoc *pc, const char *SourceStr);

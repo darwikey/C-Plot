@@ -47,6 +47,7 @@ void PicocCleanup(Picoc *pc)
 #if 1//defined(UNIX_HOST) || defined(WIN32)
 
 #define CALL_MAIN_WITH_ARGS_RETURN_DOUBLE "__exit_value = main(__arg);"
+#define CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE "__exit_value = main(__arg1, __arg2);"
 
 void PicocCallMain(Picoc *pc, double arg)
 {
@@ -79,6 +80,40 @@ void PicocCallMain(Picoc *pc, double arg)
         else
 			ProgramFailNoParser(pc, "main function must take a double as a param");
     }
+}
+
+void PicocCallMain(Picoc *pc, double arg1, double arg2)
+{
+	/* check if the program wants arguments */
+	struct Value *FuncValue = NULL;
+
+	if (!VariableDefined(pc, TableStrRegister(pc, "main")))
+		ProgramFailNoParser(pc, "main() is not defined");
+
+	VariableGet(pc, NULL, TableStrRegister(pc, "main"), &FuncValue);
+	if (FuncValue->Typ->Base != TypeFunction)
+		ProgramFailNoParser(pc, "main is not a function - can't call it");
+
+	if (FuncValue->Val->FuncDef.NumParams != 0)
+	{
+		/* define the arguments */
+		VariableDefinePlatformVar(pc, NULL, "__arg1", &pc->FPType, (union AnyValue *)&arg1, FALSE);
+		VariableDefinePlatformVar(pc, NULL, "__arg2", &pc->FPType, (union AnyValue *)&arg2, FALSE);
+	}
+
+	if (FuncValue->Val->FuncDef.ReturnType != &pc->FPType)
+	{
+		ProgramFailNoParser(pc, "main function must return a double");
+	}
+	else
+	{
+		VariableDefinePlatformVar(pc, NULL, "__exit_value", &pc->FPType, (union AnyValue *)&pc->PicocExitValue, TRUE);
+
+		if (FuncValue->Val->FuncDef.NumParams == 2)// && FuncValue->Val->FuncDef.ParamType == &pc->FPType)
+			PicocParse(pc, "startup", CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE), TRUE, TRUE, FALSE, TRUE);
+		else
+			ProgramFailNoParser(pc, "main function must take two double as a param");
+	}
 }
 #endif
 
