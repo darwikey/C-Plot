@@ -1,10 +1,10 @@
-#include "Application.h"
+﻿#include "Application.h"
 #include "picoc.h"
 
 void Application::init()
 {
 	// Create the window
-	mWindow.create(sf::VideoMode(1000, 700), "C-Plot", 7, sf::ContextSettings(8, 8, 8));
+	mWindow.create(sf::VideoMode(1000, 700), "C-Plot", 7, sf::ContextSettings(24, 8, 8));
 	mWindow.setFramerateLimit(60);
 
 	mWindow.setActive();
@@ -153,9 +153,7 @@ int Application::main()
 		}
 		else if (mCoordinate == THREE_D)
 		{
-			mWindow.popGLStates();
 			show3DGraph();
-			mWindow.pushGLStates();
 		}
 		else
 		{
@@ -404,10 +402,13 @@ void Application::showGraph()
 
 void Application::show3DGraph()
 {
+	mWindow.popGLStates();
+
 	mMutex.lock();
 	if (mPoints3D.empty())
 	{
 		mMutex.unlock();
+		mWindow.pushGLStates();
 		return;
 	}
 
@@ -506,6 +507,28 @@ void Application::show3DGraph()
 	glVertexPointer(3, GL_FLOAT, 3 * sizeof(float), positions.data());
 	glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(unsigned char), colors.data());
 	glDrawArrays(GL_LINES, 0, positions.size());
+
+	mWindow.pushGLStates();
+
+	// Axis description
+	char buffer[256];
+	sprintf_s<256>(buffer, "Axis Z: %g to %g", minZ, maxZ);
+	sf::Text text(buffer, *mGui.getFont(), 14);
+	text.setPosition(mGui.getSize().x - 230, mGui.getSize().y - 60);
+	text.setColor(sf::Color::Blue);
+	mWindow.draw(text);
+
+	sprintf_s<256>(buffer, "Axis Y: %g to %g", mGraphRect.top, mGraphRect.top + mGraphRect.height);
+	text.setString(buffer);
+	text.setPosition(text.getPosition().x, text.getPosition().y - 30);
+	text.setColor(sf::Color::Green);
+	mWindow.draw(text);
+
+	sprintf_s<256>(buffer, "Axis X: %g to %g", mGraphRect.left, mGraphRect.left + mGraphRect.width);
+	text.setString(buffer);
+	text.setPosition(text.getPosition().x, text.getPosition().y - 30);
+	text.setColor(sf::Color::Red);
+	mWindow.draw(text);
 }
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
