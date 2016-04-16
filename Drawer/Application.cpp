@@ -1,9 +1,6 @@
 #include "Application.h"
 #include "picoc.h"
 
-#define NUM_POINTS 1024
-#define CURVE_WIDTH 32
-
 void Application::init()
 {
 	// Create the window
@@ -21,7 +18,7 @@ void Application::init()
 	glDisable(GL_LIGHTING);
 
 	// Configure the viewport (the same size as the window)
-	glViewport(mWindow.getSize().x * 0.25f, 0, mWindow.getSize().x*0.75f, mWindow.getSize().y);
+	glViewport((GLsizei)(mWindow.getSize().x * 0.25f), 0, (GLsizei)(mWindow.getSize().x*0.75f), mWindow.getSize().y);
 
 	// Setup a perspective projection
 	glMatrixMode(GL_PROJECTION);
@@ -78,6 +75,7 @@ int Application::main()
 				mWindow.setView(sf::View(sf::FloatRect(0, 0, (float)event.size.width, (float)event.size.height)));
 				mGui.setView(mWindow.getView());
 				glViewport(0, 0, event.size.width, event.size.height);
+				glViewport((GLsizei)(event.size.width * 0.25f), 0, (GLsizei)(event.size.width*0.75f), event.size.height);
 			}
 
 			// Pass the event to all the widgets
@@ -188,6 +186,7 @@ void Application::execute()
 		mMutex.lock();
 		enumCoordinate coordinate = mCoordinate;
 		mMutex.unlock();
+		int curveWidth = 0;
 
 		if (coordinate != THREE_D)
 		{
@@ -197,7 +196,7 @@ void Application::execute()
 		else // 3D curve
 		{
 			result3D.clear();
-			evaluate3D(result3D);
+			evaluate3D(result3D, curveWidth);
 		}
 
 		mMutex.lock();
@@ -210,6 +209,7 @@ void Application::execute()
 			else // 3d curve
 			{
 				mPoints3D = result3D;
+				mCurveWidth = curveWidth;
 			}
 		}
 		mMutex.unlock();
@@ -223,13 +223,14 @@ void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	float width = mGraphRect.width;
 	float start = mGraphRect.left;
 	std::string buffer = mSourceCode;
+	int numPoint = mNumPoint2D;
 	mMutex.unlock();
 	int isCrash = 0;
 	char errorBuffer[1024];
 
-	for (int i = 0; i < NUM_POINTS; i++)
+	for (int i = 0; i < numPoint; i++)
 	{
-		double x = (double)i / NUM_POINTS;
+		double x = (double)i / numPoint;
 		mProgression = (float)x;
 		if (coordinate == CARTESIAN)
 		{
@@ -254,26 +255,27 @@ void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 		mErrorMessage.setString(sf::String());
 }
 
-void Application::evaluate3D(std::vector<sf::Vector3f>& result)
+void Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 {
 	mMutex.lock();
 	float width = mGraphRect.width;
 	float start = mGraphRect.left;
 	std::string buffer = mSourceCode;
+	curveWidth = mNumPoint3D;
 	mMutex.unlock();
 	int isCrash = 0;
 	char errorBuffer[1024];
 
 	double point[2];
-	for (int i = 0; i < CURVE_WIDTH; i++)
+	for (int i = 0; i < curveWidth; i++)
 	{
-		double posX = (double)i / CURVE_WIDTH;
+		double posX = (double)i / curveWidth;
 		mProgression = (float)posX;
 		point[0] = posX * width + start;
 
-		for (int j = 0; j < CURVE_WIDTH; j++)
+		for (int j = 0; j < curveWidth; j++)
 		{
-			double posY = (double)j / CURVE_WIDTH;
+			double posY = (double)j / curveWidth;
 			point[1] = posY * width + start;
 
 			float z = (float)parse(buffer.c_str(), point, 2, &isCrash, errorBuffer);
@@ -428,14 +430,14 @@ void Application::show3DGraph()
 	if (maxZ - minZ > 1e-7f)
 		deltaZ = 1.f / (maxZ - minZ);
 
-	for (int x = 0; x < CURVE_WIDTH-1; x++)
+	for (int x = 0; x < mCurveWidth-1; x++)
 	{
-		for (int y = 0; y < CURVE_WIDTH-1; y++)
+		for (int y = 0; y < mCurveWidth-1; y++)
 		{
-			sf::Vector3f p0 = mPoints3D[x * CURVE_WIDTH + y];
-			sf::Vector3f p1 = mPoints3D[(x+1) * CURVE_WIDTH + y];
-			sf::Vector3f p2 = mPoints3D[(x+1) * CURVE_WIDTH + y + 1];
-			sf::Vector3f p3 = mPoints3D[x * CURVE_WIDTH + y + 1];
+			sf::Vector3f p0 = mPoints3D[x * mCurveWidth + y];
+			sf::Vector3f p1 = mPoints3D[(x+1) * mCurveWidth + y];
+			sf::Vector3f p2 = mPoints3D[(x+1) * mCurveWidth + y + 1];
+			sf::Vector3f p3 = mPoints3D[x * mCurveWidth + y + 1];
 			sf::Color c0 = rainbowColor(p0.z = (p0.z - minZ) * deltaZ);
 			sf::Color c1 = rainbowColor(p1.z = (p1.z - minZ) * deltaZ);
 			sf::Color c2 = rainbowColor(p2.z = (p2.z - minZ) * deltaZ);
@@ -471,7 +473,7 @@ void Application::show3DGraph()
 	positions.push_back(sf::Vector3f(axisSize, 0.f, 0.f));
 	positions.push_back(sf::Vector3f(axisSize-0.07f, 0.07f, 0.f));
 	positions.push_back(sf::Vector3f(axisSize, 0.f, 0.f));
-	positions.push_back(sf::Vector3f(axisSize-0.07, -0.07f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize-0.07f, -0.07f, 0.f));
 	for (int i = 0; i < 6; i++)
 		colors.push_back(sf::Color::Red);
 
@@ -513,8 +515,7 @@ void Application::fillDefaultSourceCode()
 	}
 	else
 	{
-		mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn fabs(sin(x*0.5));\n}");
-		//mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn sin(x)*sin(y);\n}");
+		mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn sin(x*0.5)*sin(y*0.5);\n}");
 	}
 	callbackTextEdit(mSourceCodeEditBox);
 }
@@ -598,6 +599,20 @@ void Application::loadWidgets()
 		}
 		mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
 	}, coordinateBox);
+
+	tgui::CheckBox::Ptr highDefBox = theme->load("CheckBox");
+	highDefBox->setSize(20, 20);
+	highDefBox->setPosition(windowWidth * 0.25f + 250.f, 10.f);
+	highDefBox->setText("High Def");
+	mGui.add(highDefBox);
+	highDefBox->connect("checked", [this]() {
+		mNumPoint2D = 1500;
+		mNumPoint3D = 64;
+	});
+	highDefBox->connect("unchecked", [this]() {
+		mNumPoint2D = 1024;
+		mNumPoint3D = 32;
+	});
 
 	mErrorMessage.setFont(*mGui.getFont());
 	mErrorMessage.setCharacterSize(13);
@@ -685,26 +700,26 @@ sf::Color Application::rainbowColor(float i)
 {
 	if (i < 0.16667f)
 	{
-		return sf::Color(255, 0, i * 6.f*255.f);
+		return sf::Color(255, 0, (sf::Uint8)(i * 6.f*255.f));
 	}
 	else if (i < 0.33333f)
 	{
-		return sf::Color(255.f - (i - 0.166667f) * 6.f * 255.f, 0, 255);
+		return sf::Color((sf::Uint8)(255.f - (i - 0.166667f) * 6.f * 255.f), 0, 255);
 	}
 	else if (i < 0.5f)
 	{
-		return sf::Color(0, (i - 0.33333f) * 6.f * 255.f, 255);
+		return sf::Color(0, (sf::Uint8)((i - 0.33333f) * 6.f * 255.f), 255);
 	}
 	else if (i < 0.66667f)
 	{
-		return sf::Color(0, 255, 255 - (i - 0.5f) * 6.f * 255.f);
+		return sf::Color(0, 255, (sf::Uint8)(255.f - (i - 0.5f) * 6.f * 255.f));
 	}
 	else if (i < 0.83333f)
 	{
-		return sf::Color((i - 0.66667f) * 6.f * 255.f, 255, 0);
+		return sf::Color((sf::Uint8)((i - 0.66667f) * 6.f * 255.f), 255, 0);
 	}
 	else
 	{
-		return sf::Color(255, 255 - (i - 0.83333f) * 6.f * 255.f, 0);
+		return sf::Color(255, (sf::Uint8)(255.f - (i - 0.83333f) * 6.f * 255.f), 0);
 	}
 }

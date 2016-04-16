@@ -25,7 +25,7 @@ public:
 private:
 	void execute();
 	void evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate);
-	void evaluate3D(std::vector<sf::Vector3f>& result);
+	void evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth);
 	void showGraph();
 	void show3DGraph();
 	void callbackTextEdit(tgui::TextBox::Ptr source);
@@ -47,6 +47,9 @@ private:
 	std::string mSourceCode;
 	std::vector<sf::Vector2f> mPoints2D;
 	std::vector<sf::Vector3f> mPoints3D;
+	int mCurveWidth = 32;
+	int mNumPoint2D = 1024;
+	int mNumPoint3D = 32;
 	sf::FloatRect mGraphRect = sf::FloatRect(-10.f, -10.f, 20.f, 20.f);
 	sf::FloatRect mGraphScreen;
 	sf::Text mErrorMessage;
