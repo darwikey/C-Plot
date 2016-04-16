@@ -109,7 +109,8 @@ struct Value *VariableAllocValueFromType(Picoc *pc, struct ParseState *Parser, s
 {
     int Size = TypeSize(Typ, Typ->ArraySize, FALSE);
     struct Value *NewValue = VariableAllocValueAndData(pc, Parser, Size, IsLValue, LValueFrom, OnHeap);
-    assert(Size >= 0 || Typ == &pc->VoidType);
+	if (Size < 0 && Typ != &pc->VoidType)
+		ProgramFailNoParser(pc, "can't allocate a value");
     NewValue->Typ = Typ;
     
     return NewValue;
@@ -123,7 +124,8 @@ struct Value *VariableAllocValueAndCopy(Picoc *pc, struct ParseState *Parser, st
     char TmpBuf[MAX_TMP_COPY_BUF];
     int CopySize = TypeSizeValue(FromValue, TRUE);
 
-    assert(CopySize <= MAX_TMP_COPY_BUF);
+	if (CopySize > MAX_TMP_COPY_BUF)
+		ProgramFailNoParser(pc, "can't allocate a value on the heap");
     memcpy((void *)&TmpBuf[0], (void *)FromValue->Val, CopySize);
     NewValue = VariableAllocValueAndData(pc, Parser, CopySize, FromValue->IsLValue, FromValue->LValueFrom, OnHeap);
     NewValue->Typ = DType;

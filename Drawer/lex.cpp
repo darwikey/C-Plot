@@ -573,7 +573,9 @@ void *LexTokenise(Picoc *pc, struct LexState *Lexer, int *TokenLen)
     if (HeapMem == NULL)
         LexFail(pc, Lexer, "out of memory");
         
-    assert(ReserveSpace >= MemUsed);
+	if (ReserveSpace < MemUsed)
+		ProgramFailNoParser(pc, "not enough memory");
+
     memcpy(HeapMem, TokenSpace, MemUsed);
     HeapPopStack(pc, TokenSpace, ReserveSpace);
 #ifdef DEBUG_LEXER
@@ -696,12 +698,19 @@ enum LexToken LexGetRawToken(struct ParseState *Parser, struct Value **Value, in
                 { 
                     /* scan for the line */
                     for (pc->InteractiveCurrentLine = pc->InteractiveHead; Parser->Pos != &pc->InteractiveCurrentLine->Tokens[pc->InteractiveCurrentLine->NumBytes-TOKEN_DATA_OFFSET]; pc->InteractiveCurrentLine = pc->InteractiveCurrentLine->Next)
-                    { assert(pc->InteractiveCurrentLine->Next != NULL); }
+                    { 
+						if (pc->InteractiveCurrentLine->Next == NULL)
+						{
+							ProgramFail(Parser, "next line null");
+						}
+					}
                 }
 
-                assert(pc->InteractiveCurrentLine != NULL);
+				if (pc->InteractiveCurrentLine == NULL)
+					ProgramFail(Parser, "interactive current line null");
                 pc->InteractiveCurrentLine = pc->InteractiveCurrentLine->Next;
-                assert(pc->InteractiveCurrentLine != NULL);
+				if (pc->InteractiveCurrentLine == NULL)
+					ProgramFail(Parser, "interactive current line null");
                 Parser->Pos = pc->InteractiveCurrentLine->Tokens;
             }
 
@@ -748,7 +757,10 @@ enum LexToken LexGetRawToken(struct ParseState *Parser, struct Value **Value, in
 #ifdef DEBUG_LEXER
     printf("Got token=%02x inc=%d pos=%d\n", Token, IncPos, Parser->CharacterPos);
 #endif
-    assert(Token >= TokenNone && Token <= TokenEndOfFunction);
+	if (Token < TokenNone || Token > TokenEndOfFunction)
+	{
+		ProgramFail(Parser, "invalid token");
+	}
     return Token;
 }
 
@@ -971,7 +983,8 @@ void *LexCopyTokens(struct ParseState *StartParser, struct ParseState *EndParser
             for (ILine = pc->InteractiveCurrentLine->Next; ILine != NULL && (EndParser->Pos < &ILine->Tokens[0] || EndParser->Pos >= &ILine->Tokens[ILine->NumBytes]); ILine = ILine->Next)
                 MemSize += ILine->NumBytes - TOKEN_DATA_OFFSET;
             
-            assert(ILine != NULL);
+			if (ILine == NULL)
+				ProgramFail(StartParser, "line null");
             MemSize += EndParser->Pos - &ILine->Tokens[0];
             NewTokens = (unsigned char*)VariableAlloc(pc, StartParser, MemSize + TOKEN_DATA_OFFSET, TRUE);
             
@@ -983,7 +996,8 @@ void *LexCopyTokens(struct ParseState *StartParser, struct ParseState *EndParser
                 memcpy(NewTokenPos, &ILine->Tokens[0], ILine->NumBytes - TOKEN_DATA_OFFSET);
                 NewTokenPos += ILine->NumBytes-TOKEN_DATA_OFFSET;
             }
-            assert(ILine != NULL);
+			if (ILine == NULL)
+				ProgramFail(StartParser, "line null");
             memcpy(NewTokenPos, &ILine->Tokens[0], EndParser->Pos - &ILine->Tokens[0]);
         }
     }

@@ -18,7 +18,7 @@
 
 #include "interpreter.h"
 
-double parse(const char* fCode, double* arg, int paramCount, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE]);
+double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, char errorBuffer[ERROR_BUFFER_SIZE]);
 
 #include <setjmp.h>
 

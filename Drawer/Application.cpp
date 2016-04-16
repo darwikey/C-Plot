@@ -197,12 +197,18 @@ void Application::execute()
 		if (coordinate != THREE_D)
 		{
 			result2D.clear();
-			evaluate2D(result2D, coordinate);
+			if (evaluate2D(result2D, coordinate))
+			{
+				continue;
+			}
 		}
 		else // 3D curve
 		{
 			result3D.clear();
-			evaluate3D(result3D, curveWidth);
+			if (evaluate3D(result3D, curveWidth))
+			{
+				continue;
+			}
 		}
 
 		mMutex.lock();
@@ -223,7 +229,7 @@ void Application::execute()
 	}
 }
 
-void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate)
+bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate)
 {
 	mMutex.lock();
 	float width = mGraphRect.width;
@@ -231,7 +237,7 @@ void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	std::string buffer = mSourceCode;
 	int numPoint = mNumPoint2D;
 	mMutex.unlock();
-	int isCrash = 0;
+	bool isCrash = false;
 	char errorBuffer[1024];
 
 	for (int i = 0; i < numPoint; i++)
@@ -247,7 +253,7 @@ void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 			x *= 6.283185307179586;
 		}
 
-		float y = (float)parse(buffer.c_str(), &x, 1, &isCrash, errorBuffer);
+		float y = (float)parse(buffer.c_str(), &x, 1, isCrash, errorBuffer);
 		if (isCrash)
 		{
 			break;
@@ -259,9 +265,11 @@ void Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 		mErrorMessage.setString(errorBuffer);
 	else
 		mErrorMessage.setString(sf::String());
+
+	return isCrash;
 }
 
-void Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
+bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 {
 	mMutex.lock();
 	float width = mGraphRect.width;
@@ -269,7 +277,7 @@ void Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 	std::string buffer = mSourceCode;
 	curveWidth = mNumPoint3D;
 	mMutex.unlock();
-	int isCrash = 0;
+	bool isCrash = false;
 	char errorBuffer[1024];
 
 	double point[2];
@@ -284,7 +292,7 @@ void Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 			double posY = (double)j / curveWidth;
 			point[1] = posY * width + start;
 
-			float z = (float)parse(buffer.c_str(), point, 2, &isCrash, errorBuffer);
+			float z = (float)parse(buffer.c_str(), point, 2, isCrash, errorBuffer);
 			if (isCrash)
 			{
 				break;
@@ -302,6 +310,8 @@ void Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 		mErrorMessage.setString(errorBuffer);
 	else
 		mErrorMessage.setString(sf::String());
+	
+	return isCrash;
 }
 
 void Application::showGraph()

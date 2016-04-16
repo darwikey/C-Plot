@@ -996,7 +996,9 @@ void ExpressionStackCollapse(struct ParseState *Parser, struct ExpressionStack *
 
                 case OrderNone:
                     /* this should never happen */
-                    assert(TopOperatorNode->Order != OrderNone);
+                    //assert(TopOperatorNode->Order != OrderNone);
+					if (TopOperatorNode->Order == OrderNone)
+						ProgramFail(Parser, "error while parsing");
                     break;
             }
             

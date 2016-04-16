@@ -24,8 +24,8 @@ public:
 
 private:
 	void execute();
-	void evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate);
-	void evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth);
+	bool evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate coordinate);
+	bool evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth);
 	void showGraph();
 	void show3DGraph();
 	void callbackTextEdit(tgui::TextBox::Ptr source);

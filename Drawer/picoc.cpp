@@ -13,9 +13,9 @@
 
 #define PICOC_STACK_SIZE (128*1024)              /* space for the the stack */
 
-double parse(const char* fCode, double* arg, int paramCount, int* isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
+double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
 {
-	*isCrash = 0;
+	isCrash = false;
 
     int StackSize = getenv("STACKSIZE") ? atoi(getenv("STACKSIZE")) : PICOC_STACK_SIZE;
     Picoc pc;
@@ -40,7 +40,7 @@ double parse(const char* fCode, double* arg, int paramCount, int* isCrash, char 
     {
         if (PicocPlatformSetExitPoint(&pc))
         {
-			*isCrash = 1;
+			isCrash = true;
 			strcpy_s(errorBuffer, ERROR_BUFFER_SIZE, pc.ErrorBuffer);
             PicocCleanup(&pc);
             return pc.PicocExitValue;

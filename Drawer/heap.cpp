@@ -100,7 +100,10 @@ int HeapPopStack(Picoc *pc, void *Addr, int Size)
 #endif
     pc->HeapStackTop = (void *)((char *)pc->HeapStackTop - ToLose);
     //assert(Addr == NULL || pc->HeapStackTop == Addr);
-    
+	if (Addr != NULL && pc->HeapStackTop != Addr)
+	{
+		ProgramFailNoParser(pc, "error with the heap");
+	}
     return TRUE;
 }
 
