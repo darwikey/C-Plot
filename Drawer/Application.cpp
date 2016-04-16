@@ -134,6 +134,14 @@ int Application::main()
 
 		// Draw all created widgets
 		mWindow.pushGLStates();
+
+		// UI
+		if (!mShowFunctionList)
+		{
+			sf::RectangleShape rect(sf::Vector2f(100, 20));
+			rect.setPosition(mGui.getSize().x * 0.25f + 250.f, 10.f);
+			mWindow.draw(rect);
+		}
 		mGui.draw();
 
 		// Curve
