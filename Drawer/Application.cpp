@@ -282,7 +282,12 @@ void Application::evaluate3D(std::vector<sf::Vector3f>& result)
 				break;
 			}
 
-			result.push_back(sf::Vector3f(1.f * (float)(posX-0.5f), 1.f * (float)(posY-0.5f), z));
+			result.push_back(sf::Vector3f((float)(posX-0.5f), (float)(posY-0.5f), z));
+		}
+
+		if (isCrash)
+		{
+			break;
 		}
 	}
 	if (isCrash)
@@ -403,7 +408,7 @@ void Application::show3DGraph()
 	glLoadIdentity();
 	glTranslatef(0.f, 0.f, -4.f);
 	static sf::Clock clock;
-	glRotatef(30.f, -1.f, 1.f, 0.f);
+	glRotatef(30.f, -1.f, 0.2f, 0.f);
 	glRotatef(clock.getElapsedTime().asSeconds() * 30.f, 0.f, 0.f, 1.f);
 	float scale = 3.f;
 	glScalef(scale, scale, scale);
@@ -455,8 +460,42 @@ void Application::show3DGraph()
 
 	glVertexPointer(3, GL_FLOAT, 3 * sizeof(float), positions.data());
 	glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(unsigned char), colors.data());
-
 	glDrawArrays(GL_TRIANGLES, 0, positions.size());
+
+	//Axis
+	positions.clear();
+	colors.clear();
+	const float axisSize = 0.85f;
+	positions.push_back(sf::Vector3f(-axisSize, 0.f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize, 0.f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize, 0.f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize-0.07f, 0.07f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize, 0.f, 0.f));
+	positions.push_back(sf::Vector3f(axisSize-0.07, -0.07f, 0.f));
+	for (int i = 0; i < 6; i++)
+		colors.push_back(sf::Color::Red);
+
+	positions.push_back(sf::Vector3f(0.f, -axisSize, 0.f));
+	positions.push_back(sf::Vector3f(0.f, axisSize, 0.f));
+	positions.push_back(sf::Vector3f(0.f, axisSize, 0.f));
+	positions.push_back(sf::Vector3f(0.07f, axisSize - 0.07f, 0.f));
+	positions.push_back(sf::Vector3f(0.f, axisSize, 0.f));
+	positions.push_back(sf::Vector3f(-0.07f, axisSize - 0.07f, 0.f));
+	for (int i = 0; i < 6; i++)
+		colors.push_back(sf::Color::Green);
+
+	positions.push_back(sf::Vector3f(0.f, 0.f, -axisSize));
+	positions.push_back(sf::Vector3f(0.f, 0.f, axisSize));
+	positions.push_back(sf::Vector3f(0.f, 0.f, axisSize));
+	positions.push_back(sf::Vector3f(0.07f, 0.f, axisSize - 0.07f));
+	positions.push_back(sf::Vector3f(0.f, 0.f, axisSize));
+	positions.push_back(sf::Vector3f(-0.07f, 0.f, axisSize - 0.07f));
+	for (int i = 0; i < 6; i++)
+		colors.push_back(sf::Color::Blue);
+
+	glVertexPointer(3, GL_FLOAT, 3 * sizeof(float), positions.data());
+	glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(unsigned char), colors.data());
+	glDrawArrays(GL_LINES, 0, positions.size());
 }
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
