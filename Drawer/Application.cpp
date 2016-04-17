@@ -46,7 +46,7 @@ void Application::init()
 	}
 
 	// launch a thread with the parser
-	mThread = std::thread(&Application::execute, this);
+	mThread = new std::thread(&Application::execute, this);
 }
 
 int Application::main()
@@ -178,7 +178,8 @@ int Application::main()
 		mWindow.display();
 	}
 
-	mThread.detach();
+	if (mThread)
+		mThread->detach();
 	return EXIT_SUCCESS;
 }
 
@@ -612,14 +613,26 @@ void Application::loadWidgets()
 	// Apply default source code
 	fillDefaultSourceCode();
 
-	// Create the login button
-	tgui::Button::Ptr button = theme->load("Button");
-	button->setSize(windowWidth * 0.25f, 25);
-	button->setPosition(10, windowHeight -150);
-	button->setText("Show built-in functions");
-	mGui.add(button);
-	button->connect("pressed", [this] {
+	// Create buttons
+	tgui::Button::Ptr functionButton = theme->load("Button");
+	functionButton->setSize(windowWidth * 0.25f, 25);
+	functionButton->setPosition(10, windowHeight -150);
+	functionButton->setText("Show built-in functions");
+	mGui.add(functionButton);
+	functionButton->connect("pressed", [this] {
 		mShowFunctionList = !mShowFunctionList;
+	});
+
+	tgui::Button::Ptr resetButton = theme->load("Button");
+	resetButton->setSize(windowWidth * 0.25f, 25);
+	resetButton->setPosition(10, windowHeight - 120);
+	resetButton->setText("Reset interpreter");
+	mGui.add(resetButton);
+	resetButton->connect("pressed", [this] {
+		extern bool gResetParser;
+		gResetParser = true;
+		/*Sleep(100);
+		gResetParser = false;*/
 	});
 
 	tgui::ComboBox::Ptr coordinateBox = theme->load("ComboBox");

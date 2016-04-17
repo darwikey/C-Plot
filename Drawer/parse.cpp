@@ -3,6 +3,8 @@
 #include "picoc.h"
 #include "interpreter.h"
 
+bool gResetParser = false;
+
 /* deallocate any memory */
 void ParseCleanup(Picoc *pc)
 {
@@ -484,6 +486,9 @@ void ParseFor(struct ParseState *Parser)
         
     while (Condition && Parser->Mode == RunModeRun)
     {
+		if (gResetParser)
+			ProgramFail(Parser, "Reset");
+
         ParserCopyPos(Parser, &PreIncrement);
         ParseStatement(Parser, FALSE);
                         
@@ -525,14 +530,20 @@ enum RunMode ParseBlock(struct ParseState *Parser, int AbsorbOpenBrace, int Cond
         enum RunMode OldMode = Parser->Mode;
         Parser->Mode = RunModeSkip;
         while (ParseStatement(Parser, TRUE) == ParseResultOk)
-        {}
+        {
+			if (gResetParser)
+				ProgramFail(Parser, "Reset");
+		}
         Parser->Mode = OldMode;
     }
     else
     { 
         /* just run it in its current mode */
         while (ParseStatement(Parser, TRUE) == ParseResultOk)
-        {}
+        {
+			if (gResetParser)
+				ProgramFail(Parser, "Reset");
+		}
     }
     
     if (LexGetToken(Parser, NULL, TRUE) != TokenRightBrace)
@@ -690,6 +701,9 @@ enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemi
                 ParserCopyPos(&PreConditional, Parser);
                 do
                 {
+					if (gResetParser)
+						ProgramFail(Parser, "Reset");
+
                     ParserCopyPos(Parser, &PreConditional);
                     Condition = ExpressionParseInt(Parser);
                     if (LexGetToken(Parser, NULL, TRUE) != TokenCloseBracket)
@@ -717,6 +731,9 @@ enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemi
                 ParserCopyPos(&PreStatement, Parser);
                 do
                 {
+					if (gResetParser)
+						ProgramFail(Parser, "Reset");
+
                     ParserCopyPos(Parser, &PreStatement);
                     if (ParseStatement(Parser, TRUE) != ParseResultOk)
                         ProgramFail(Parser, "statement expected");
@@ -961,6 +978,9 @@ void PicocParse(Picoc *pc, const char *FileName, const char *Source, int SourceL
     LexInitParser(&Parser, pc, Source, Tokens, RegFileName, RunIt, EnableDebugger);
 
     do {
+		if (gResetParser)
+			ProgramFail(&Parser, "Reset");
+
         Ok = ParseStatement(&Parser, TRUE);
     } while (Ok == ParseResultOk);
     
@@ -984,6 +1004,9 @@ void PicocParseInteractiveNoStartPrompt(Picoc *pc, int EnableDebugger)
 
     do
     {
+		if (gResetParser)
+			ProgramFail(&Parser, "Reset");
+
         LexInteractiveStatementPrompt(pc);
         Ok = ParseStatement(&Parser, TRUE);
         LexInteractiveCompleted(pc, &Parser);

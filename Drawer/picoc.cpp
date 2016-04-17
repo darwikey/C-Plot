@@ -13,39 +13,36 @@
 
 #define PICOC_STACK_SIZE (128*1024)              /* space for the the stack */
 
+extern bool gResetParser;
+
 double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
 {
 	isCrash = false;
+	gResetParser = false;
 
     int StackSize = getenv("STACKSIZE") ? atoi(getenv("STACKSIZE")) : PICOC_STACK_SIZE;
     Picoc pc;
+	memset(&pc, '\0', sizeof(pc));
     
-    /*if (argc < 2)
-    {
-        printf("Format: picoc <csource1.c>... [- <arg1>...]    : run a program (calls main() to start it)\n"
-               "        picoc -s <csource1.c>... [- <arg1>...] : script mode - runs the program without calling main()\n"
-               "        picoc -i                               : interactive mode\n");
-        exit(1);
-    }*/
-    
+	if (PicocPlatformSetExitPoint(&pc))
+	{
+		isCrash = true;
+		strcpy_s(errorBuffer, ERROR_BUFFER_SIZE, pc.ErrorBuffer);
+		PicocCleanup(&pc);
+		return pc.PicocExitValue;
+	}
+
     PicocInitialise(&pc, StackSize);
     
         
-    if (0)//argc > ParamCount && strcmp(argv[ParamCount], "-i") == 0)
+    //if (0)//argc > ParamCount && strcmp(argv[ParamCount], "-i") == 0)
+    //{
+    //    PicocIncludeAllSystemHeaders(&pc);
+    //    PicocParseInteractive(&pc);
+    //}
+    //else
     {
-        PicocIncludeAllSystemHeaders(&pc);
-        PicocParseInteractive(&pc);
-    }
-    else
-    {
-        if (PicocPlatformSetExitPoint(&pc))
-        {
-			isCrash = true;
-			strcpy_s(errorBuffer, ERROR_BUFFER_SIZE, pc.ErrorBuffer);
-            PicocCleanup(&pc);
-            return pc.PicocExitValue;
-        }
-        
+            
         //for (; ParamCount < argc && strcmp(argv[ParamCount], "-") != 0; ParamCount++)
         PicocPlatformScanFile(&pc, fCode);
         

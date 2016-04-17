@@ -42,7 +42,7 @@ private:
 	sf::RenderWindow mWindow;
 	tgui::Gui mGui;
 	tgui::TextBox::Ptr mSourceCodeEditBox;
-	std::thread mThread;
+	std::thread* mThread = nullptr;
 	mutable sf::Mutex mMutex;
 	std::string mSourceCode;
 	std::vector<sf::Vector2f> mPoints2D;

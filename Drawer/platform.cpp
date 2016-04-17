@@ -8,7 +8,6 @@
 /* initialise everything */
 void PicocInitialise(Picoc *pc, int StackSize)
 {
-    memset(pc, '\0', sizeof(*pc));
     PlatformInit(pc);
     BasicIOInit(pc);
     HeapInit(pc, StackSize);
