@@ -162,7 +162,7 @@ int Application::main()
 
 		// Display messages
 		mMutex.lock();
-		mErrorMessage.setPosition(30, mGui.getSize().y - 100);
+		mErrorMessage.setPosition(30, mGui.getSize().y - 70);
 		mWindow.draw(mErrorMessage);
 		mMutex.unlock();
 
@@ -463,6 +463,7 @@ void Application::show3DGraph()
 			sf::Color c2 = rainbowColor(p2.z = (p2.z - minZ) * deltaZ);
 			sf::Color c3 = rainbowColor(p3.z = (p3.z - minZ) * deltaZ);
 			p0.z -=  0.5f; p1.z -= 0.5f; p2.z -= 0.5f; p3.z -= 0.5f;
+			p0.z *= 0.5f; p1.z *= 0.5f; p2.z *= 0.5f; p3.z *= 0.5f;
 
 			positions.push_back(p0);
 			positions.push_back(p1);
@@ -631,8 +632,6 @@ void Application::loadWidgets()
 	resetButton->connect("pressed", [this] {
 		extern bool gResetParser;
 		gResetParser = true;
-		/*Sleep(100);
-		gResetParser = false;*/
 	});
 
 	tgui::ComboBox::Ptr coordinateBox = theme->load("ComboBox");
@@ -669,7 +668,7 @@ void Application::loadWidgets()
 	});
 
 	mErrorMessage.setFont(*mGui.getFont());
-	mErrorMessage.setCharacterSize(13);
+	mErrorMessage.setCharacterSize(14);
 	mErrorMessage.setColor(sf::Color::Red);
 }
 
@@ -752,28 +751,30 @@ float Application::getAccurateYValue(float x) const
 //i entre 0 et 1
 sf::Color Application::rainbowColor(float i)
 {
-	if (i < 0.16667f)
+	i *= 0.833333f;
+
+	if (i < 0.16666667f)
 	{
 		return sf::Color(255, 0, (sf::Uint8)(i * 6.f*255.f));
 	}
-	else if (i < 0.33333f)
+	else if (i < 0.33333333f)
 	{
-		return sf::Color((sf::Uint8)(255.f - (i - 0.166667f) * 6.f * 255.f), 0, 255);
+		return sf::Color((sf::Uint8)(255.f - (i - 0.16666667f) * 6.f * 255.f), 0, 255);
 	}
 	else if (i < 0.5f)
 	{
-		return sf::Color(0, (sf::Uint8)((i - 0.33333f) * 6.f * 255.f), 255);
+		return sf::Color(0, (sf::Uint8)((i - 0.3333333f) * 6.f * 255.f), 255);
 	}
-	else if (i < 0.66667f)
+	else if (i < 0.66666667f)
 	{
 		return sf::Color(0, 255, (sf::Uint8)(255.f - (i - 0.5f) * 6.f * 255.f));
 	}
-	else if (i < 0.83333f)
+	else if (i < 0.8333333f)
 	{
-		return sf::Color((sf::Uint8)((i - 0.66667f) * 6.f * 255.f), 255, 0);
+		return sf::Color((sf::Uint8)((i - 0.6666667f) * 6.f * 255.f), 255, 0);
 	}
 	else
 	{
-		return sf::Color(255, (sf::Uint8)(255.f - (i - 0.83333f) * 6.f * 255.f), 0);
+		return sf::Color(255, (sf::Uint8)(255.f - (i - 0.8333333f) * 6.f * 255.f), 0);
 	}
 }
