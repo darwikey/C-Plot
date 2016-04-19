@@ -63,6 +63,7 @@ int Application::main()
 		// Events and inputs
 		//***************************************************
 		sf::Event event;
+		int mouseWheel = 0;
 		while (mWindow.pollEvent(event))
 		{
 			// When the window is closed, the application ends
@@ -77,6 +78,10 @@ int Application::main()
 				glViewport(0, 0, event.size.width, event.size.height);
 				glViewport((GLsizei)(event.size.width * 0.25f), 0, (GLsizei)(event.size.width*0.75f), event.size.height);
 			}
+			else if (event.type == sf::Event::MouseWheelMoved)
+			{
+				mouseWheel = event.mouseWheel.delta;
+			}
 
 			// Pass the event to all the widgets
 			mGui.handleEvent(event);
@@ -86,24 +91,15 @@ int Application::main()
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageUp) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
-			sf::Vector2f center(mGraphRect.left + 0.5f * mGraphRect.width, mGraphRect.top + 0.5f * mGraphRect.height);
-			sf::Lock lock(mMutex);
-			mGraphRect.width *= 1.02f;
-			mGraphRect.height *= 1.02f;
-			mGraphRect.left = center.x - 0.5f * mGraphRect.width;
-			mGraphRect.top = center.y - 0.5f * mGraphRect.height;
+			ApplyZoomOnGraph(1.02f);
 		}
 		// Zoom out
 		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageDown) && timer.getElapsedTime().asMilliseconds() > 10)
 		{
 			timer.restart();
-			sf::Vector2f center(mGraphRect.left + 0.5f * mGraphRect.width, mGraphRect.top + 0.5f * mGraphRect.height);
-			sf::Lock lock(mMutex);
-			mGraphRect.width *= 0.98f;
-			mGraphRect.height *= 0.98f;
-			mGraphRect.left = center.x - 0.5f * mGraphRect.width;
-			mGraphRect.top = center.y - 0.5f * mGraphRect.height;
+			ApplyZoomOnGraph(0.98f);
 		}
+		ApplyZoomOnGraph(1.f + 0.15f * mouseWheel);
 		// mouse
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
@@ -313,6 +309,16 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 		mErrorMessage.setString(sf::String());
 	
 	return isCrash;
+}
+
+void Application::ApplyZoomOnGraph(float factor)
+{
+	sf::Vector2f center(mGraphRect.left + 0.5f * mGraphRect.width, mGraphRect.top + 0.5f * mGraphRect.height);
+	sf::Lock lock(mMutex);
+	mGraphRect.width *= factor;
+	mGraphRect.height *= factor;
+	mGraphRect.left = center.x - 0.5f * mGraphRect.width;
+	mGraphRect.top = center.y - 0.5f * mGraphRect.height;
 }
 
 void Application::showGraph()
