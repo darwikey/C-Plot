@@ -685,7 +685,7 @@ void ExpressionInfixOperator(struct ParseState *Parser, struct ExpressionStack *
     void *Pointer;
     
     debugf("ExpressionInfixOperator()\n");
-    if (BottomValue == NULL || TopValue == NULL)
+    if (BottomValue == NULL || TopValue == NULL || BottomValue->Typ == NULL || TopValue->Typ == NULL)
         ProgramFail(Parser, "invalid expression");
         
     if (Op == TokenLeftSquareBracket)
