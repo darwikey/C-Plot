@@ -12,7 +12,6 @@ Release/*.ipdb
 Release/*.pdb
 
 TGUI-0.7/build
-TGUI-0.7/cmake
 TGUI-0.7/doc
 TGUI-0.7/examples
 TGUI-0.7/tests
