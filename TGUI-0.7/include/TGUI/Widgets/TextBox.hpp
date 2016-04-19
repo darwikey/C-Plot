@@ -194,7 +194,7 @@ namespace tgui
         /// @return  The text that is currently inside the text box
         ///
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        sf::String getText() const
+        sf::String& getText()
         {
             return m_text;
         }

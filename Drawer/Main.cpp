@@ -1,6 +1,6 @@
 #include "Application.h"
 
-int main()
+int __stdcall WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, char*, int nShowCmd)
 {
 	Application app;
 	app.init();

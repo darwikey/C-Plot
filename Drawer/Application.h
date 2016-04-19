@@ -56,6 +56,6 @@ private:
 	sf::Text mErrorMessage;
 	float mProgression = 0.f;
 	bool mShowFunctionList = false;
-	enumCoordinate mCoordinate = THREE_D;
+	enumCoordinate mCoordinate = CARTESIAN;
 
 };

@@ -551,6 +551,14 @@ void Application::show3DGraph()
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 {
+	// remove \r
+	for (size_t i = 0; i < source->getText().getSize(); i++)
+	{
+		if (source->getText()[i] == '\r')
+		{
+			source->getText()[i] = ' ';
+		}
+	}
 	mMutex.lock();
 	mSourceCode = source->getText().toAnsiString();
 	mMutex.unlock();
