@@ -15,4 +15,8 @@ TGUI-0.7/build
 TGUI-0.7/cmake
 TGUI-0.7/doc
 TGUI-0.7/examples
-TGUI-0.7/src
+TGUI-0.7/tests
+TGUI-0.7/appveyor.yml
+TGUI-0.7/Android.mk
+TGUI-0.7/.travis.yml
+TGUI-0.7/.gitignore
