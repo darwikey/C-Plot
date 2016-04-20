@@ -99,7 +99,10 @@ int Application::main()
 			timer.restart();
 			ApplyZoomOnGraph(0.98f);
 		}
-		ApplyZoomOnGraph(1.f + 0.15f * mouseWheel);
+		if (mouseWheel != 0)
+		{
+			ApplyZoomOnGraph(1.f + 0.15f * mouseWheel);
+		}
 		// mouse
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
@@ -109,6 +112,7 @@ int Application::main()
 				const float sensibility = 0.001f;
 				mGraphRect.left = dragPosition.x - delta.x * sensibility * mGraphRect.width;
 				mGraphRect.top = dragPosition.y + delta.y * sensibility * mGraphRect.height;
+				mSourceDirty = true;
 			}
 			else
 			{
@@ -186,6 +190,12 @@ void Application::execute()
 	
 	while (1)
 	{
+		while (!mSourceDirty)
+		{
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		}
+		mSourceDirty = false;
+
 		mMutex.lock();
 		enumCoordinate coordinate = mCoordinate;
 		mMutex.unlock();
@@ -222,7 +232,6 @@ void Application::execute()
 			}
 		}
 		mMutex.unlock();
-		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
 }
 
@@ -319,6 +328,7 @@ void Application::ApplyZoomOnGraph(float factor)
 	mGraphRect.height *= factor;
 	mGraphRect.left = center.x - 0.5f * mGraphRect.width;
 	mGraphRect.top = center.y - 0.5f * mGraphRect.height;
+	mSourceDirty = true;
 }
 
 void Application::showGraph()
@@ -561,6 +571,7 @@ void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 	}
 	mMutex.lock();
 	mSourceCode = source->getText().toAnsiString();
+	mSourceDirty = true;
 	mMutex.unlock();
 }
 

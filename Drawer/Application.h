@@ -46,6 +46,7 @@ private:
 	std::thread* mThread = nullptr;
 	mutable sf::Mutex mMutex;
 	std::string mSourceCode;
+	bool mSourceDirty = true;
 	std::vector<sf::Vector2f> mPoints2D;
 	std::vector<sf::Vector3f> mPoints3D;
 	int mCurveWidth = 32;
