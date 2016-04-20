@@ -393,6 +393,9 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
     if (!DestValue->IsLValue && !Force) 
         AssignFail(Parser, "not an lvalue", NULL, NULL, 0, 0, FuncName, ParamNo); 
 
+	if (DestValue->Typ == NULL || SourceValue->Typ == NULL)
+		AssignFail(Parser, "incorrect type", NULL, NULL, 0, 0, FuncName, ParamNo);
+
     if (IS_NUMERIC_COERCIBLE(DestValue) && !IS_NUMERIC_COERCIBLE_PLUS_POINTERS(SourceValue, AllowPointerCoercion))
         AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
 
