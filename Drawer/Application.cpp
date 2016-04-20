@@ -53,9 +53,10 @@ int Application::main()
 {
 	// Main loop
 	sf::Clock timer;
-	bool drag = false;
+	enumDragMode drag = NO_DRAG;
 	sf::Vector2f dragPosition;
 	sf::Vector2i dragMousePosition;
+	sf::FloatRect dragGraphRect = mGraphRect;
 
 	while (mWindow.isOpen())
 	{
@@ -106,24 +107,46 @@ int Application::main()
 		// mouse
 		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
 		{
-			if (drag)
+			if (drag != NO_DRAG)
 			{
+				sf::Lock lock(mMutex);
 				sf::Vector2i delta = sf::Mouse::getPosition() - dragMousePosition;
 				const float sensibility = 0.001f;
-				mGraphRect.left = dragPosition.x - delta.x * sensibility * mGraphRect.width;
-				mGraphRect.top = dragPosition.y + delta.y * sensibility * mGraphRect.height;
+				if (drag == DRAG_XY)
+				{
+					mGraphRect.left = dragPosition.x - delta.x * sensibility * mGraphRect.width;
+					mGraphRect.top = dragPosition.y + delta.y * sensibility * mGraphRect.height;
+				}
+				else if (drag == DRAG_X)
+				{
+					float center = dragGraphRect.left + 0.5f * dragGraphRect.width;
+					mGraphRect.width = dragGraphRect.width * pow(2.f, delta.x * 0.01f);
+					mGraphRect.left = center - 0.5f * mGraphRect.width;
+				}
+				else if (drag == DRAG_Y)
+				{
+					float center = dragGraphRect.top + 0.5f * dragGraphRect.height;
+					mGraphRect.height = dragGraphRect.height * pow(2.f, delta.y * 0.01f);
+					mGraphRect.top = center - 0.5f * mGraphRect.height;
+				}
 				mSourceDirty = true;
 			}
-			else
+			else if ((float)sf::Mouse::getPosition(mWindow).x > 0.25f * mGui.getSize().x)
 			{
-				drag = true;
+				if (isMouseOverXAxis())
+					drag = DRAG_X;
+				else if (isMouseOverYAxis())
+					drag = DRAG_Y;
+				else
+					drag = DRAG_XY;
 				dragPosition = sf::Vector2f(mGraphRect.left, mGraphRect.top);
 				dragMousePosition = sf::Mouse::getPosition();
+				dragGraphRect = mGraphRect;
 			}
 		}
 		else
 		{
-			drag = false;
+			drag = NO_DRAG;
 		}
 
 
@@ -354,13 +377,15 @@ void Application::showGraph()
 	// Axis
 	std::vector<sf::Vertex> axis;
 	// horizontal
+	sf::Color axisColor = isMouseOverXAxis() ? sf::Color(150, 150, 150) : sf::Color::White;
 	float middleY = 1.f + mGraphRect.top / mGraphRect.height;
-	lines.push_back(sf::Vector2f(mGraphScreen.left, mGraphScreen.top + middleY*mGraphScreen.height));
-	lines.push_back(sf::Vector2f(mGraphScreen.left + mGraphScreen.width, mGraphScreen.top + middleY*mGraphScreen.height));
+	lines.push_back(sf::Vertex(sf::Vector2f(mGraphScreen.left, mGraphScreen.top + middleY*mGraphScreen.height), axisColor));
+	lines.push_back(sf::Vertex(sf::Vector2f(mGraphScreen.left + mGraphScreen.width, mGraphScreen.top + middleY*mGraphScreen.height), axisColor));
 	//vertical
+	axisColor = isMouseOverYAxis() ? sf::Color(150, 150, 150) : sf::Color::White;
 	float middleX = -mGraphRect.left / mGraphRect.width;
-	lines.push_back(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width, mGraphScreen.top));
-	lines.push_back(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width, mGraphScreen.top + mGraphScreen.height));
+	lines.push_back(sf::Vertex(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width, mGraphScreen.top - 20.f), axisColor));
+	lines.push_back(sf::Vertex(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width, mGraphScreen.top + mGraphScreen.height + 50.f), axisColor));
 
 	std::vector<float> graduation = computeAxisGraduation(mGraphRect.left, mGraphRect.left + mGraphRect.width);
 	const float graduationSize = 2.f;
@@ -707,6 +732,20 @@ sf::Vector2f Application::convertScreenCoordToGraph(const sf::Vector2f& point) c
 {
 	sf::Vector2f p((point.x - mGraphScreen.left) / mGraphScreen.width, (point.y - mGraphScreen.top) / mGraphScreen.height);
 	return sf::Vector2f(p.x * mGraphRect.width + mGraphRect.left, (1.f-p.y) * mGraphRect.height + mGraphRect.top);
+}
+
+bool Application::isMouseOverXAxis()
+{
+	float middleY = 1.f + mGraphRect.top / mGraphRect.height;
+	float axis = mGraphScreen.top + middleY*mGraphScreen.height;
+	return fabs(axis - sf::Mouse::getPosition(mWindow).y) < 10.f;
+}
+
+bool Application::isMouseOverYAxis()
+{
+	float middleX = -mGraphRect.left / mGraphRect.width;
+	float axis = mGraphScreen.left + middleX*mGraphScreen.width;
+	return fabs(axis - sf::Mouse::getPosition(mWindow).x) < 10.f;
 }
 
 std::vector<float> Application::computeAxisGraduation(float min, float max) const

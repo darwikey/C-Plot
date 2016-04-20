@@ -15,6 +15,14 @@ enum enumCoordinate
 	THREE_D
 };
 
+enum enumDragMode
+{
+	NO_DRAG,
+	DRAG_X,
+	DRAG_Y,
+	DRAG_XY,
+};
+
 class Application
 {
 public:
@@ -35,6 +43,8 @@ private:
 	void loadWidgets();
 	sf::Vector2f convertGraphCoordToScreen(const sf::Vector2f& point) const;
 	sf::Vector2f convertScreenCoordToGraph(const sf::Vector2f& point) const;
+	bool isMouseOverXAxis();
+	bool isMouseOverYAxis();
 	std::vector<float> computeAxisGraduation(float min, float max) const;
 	float getAccurateYValue(float x) const;
 	sf::Color rainbowColor(float i);
