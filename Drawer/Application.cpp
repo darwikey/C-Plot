@@ -83,6 +83,35 @@ int Application::main()
 			{
 				mouseWheel = event.mouseWheel.delta;
 			}
+			else if (event.type == sf::Event::KeyPressed)
+			{
+				// Undo
+				if (event.key.code == sf::Keyboard::Z && event.key.control && !mSourceCodeHistory.empty())
+				{
+					mMutex.lock();
+					mSourceCodeRedo.push_back(mSourceCode);
+					if (mSourceCodeRedo.size() > 50) // limit the size of the history
+						mSourceCodeRedo.pop_front();
+					mSourceCode = mSourceCodeHistory.back();
+					mSourceDirty = true;
+					mSourceCodeHistory.pop_back();
+					mMutex.unlock();
+					mSourceCodeEditBox->setText(mSourceCode);
+				}
+				//Redo
+				if (event.key.code == sf::Keyboard::Y && event.key.control && !mSourceCodeRedo.empty())
+				{
+					mMutex.lock();
+					mSourceCodeHistory.push_back(mSourceCode);
+					if (mSourceCodeHistory.size() > 50)//limit the size of the history
+						mSourceCodeHistory.pop_front();
+					mSourceCode = mSourceCodeRedo.back();
+					mSourceDirty = true;
+					mSourceCodeRedo.pop_back();
+					mMutex.unlock();
+					mSourceCodeEditBox->setText(mSourceCode);
+				}
+			}
 
 			// Pass the event to all the widgets
 			mGui.handleEvent(event);
@@ -595,6 +624,10 @@ void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 		}
 	}
 	mMutex.lock();
+	mSourceCodeHistory.push_back(mSourceCode);
+	if (mSourceCodeHistory.size() > 50)//limit the size of the history
+		mSourceCodeHistory.pop_front();
+	mSourceCodeRedo.clear();
 	mSourceCode = source->getText().toAnsiString();
 	mSourceDirty = true;
 	mMutex.unlock();
