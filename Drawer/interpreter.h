@@ -18,9 +18,6 @@
 #define NULL 0
 #endif
 
-#ifndef min
-#define min(x,y) (((x)<(y))?(x):(y))
-#endif
 
 #define MEM_ALIGN(x) (((x) + sizeof(ALIGN_TYPE) - 1) & ~(sizeof(ALIGN_TYPE)-1))
 

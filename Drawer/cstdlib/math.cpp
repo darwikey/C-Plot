@@ -136,6 +136,38 @@ void MathFloor(struct ParseState *Parser, struct Value *ReturnValue, struct Valu
     ReturnValue->Val->FP = floor(Param[0]->Val->FP);
 }
 
+void MathMin(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	if (Param[0]->Val->FP < Param[1]->Val->FP)
+		ReturnValue->Val->FP = Param[0]->Val->FP;
+	else
+		ReturnValue->Val->FP = Param[1]->Val->FP;
+}
+
+void MathMax(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	if (Param[0]->Val->FP > Param[1]->Val->FP)
+		ReturnValue->Val->FP = Param[0]->Val->FP;
+	else
+		ReturnValue->Val->FP = Param[1]->Val->FP;
+}
+
+void MathClamp(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	double s = Param[0]->Val->FP;
+	if (s < Param[1]->Val->FP)
+		s = Param[1]->Val->FP;
+	else if (s > Param[2]->Val->FP)
+		s = Param[2]->Val->FP;
+	ReturnValue->Val->FP = s;
+}
+
+void MathLerp(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	double i = Param[0]->Val->FP;
+	ReturnValue->Val->FP = (1.0-i) * Param[1]->Val->FP + i * Param[2]->Val->FP;
+}
+
 /* all math.h functions */
 struct LibraryFunction MathFunctions[] =
 {
@@ -162,6 +194,10 @@ struct LibraryFunction MathFunctions[] =
     { MathSqrt,         "double sqrt(double);" },
     { MathTan,          "double tan(double);" },
     { MathTanh,         "double tanh(double);" },
+	{ MathMin,          "double min(double, double);" },
+	{ MathMax,          "double max(double, double);" },
+	{ MathClamp,        "double clamp(double, double, double);" },
+	{ MathLerp,         "double lerp(double, double, double);" },
     { NULL,             NULL }
 };
 

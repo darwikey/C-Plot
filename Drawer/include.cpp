@@ -125,6 +125,7 @@ void GetBuiltInFunction(std::string& list, LibraryFunction* lib)
 		list.append(lib[Count].Prototype);
 		list.push_back('\n');
 	}
+	list.push_back('\n');
 }
 
 void GetBuiltInConstants(std::string& list, LibraryConstant* lib)
@@ -139,6 +140,7 @@ void GetBuiltInConstants(std::string& list, LibraryConstant* lib)
 			list.append(std::to_string(lib[Count].CstValue->FP));
 		list.push_back('\n');
 	}
+	list.push_back('\n');
 }
 
 void GetBuiltInFunctionConstants(std::string& list)
@@ -149,7 +151,7 @@ void GetBuiltInFunctionConstants(std::string& list)
 	GetBuiltInFunction(list, StdlibFunctions);
 	GetBuiltInFunction(list, StringFunctions);
 	GetBuiltInFunction(list, StdTimeFunctions);
-	list.append("\n\n");
+	list.push_back('\n');
 	GetBuiltInConstants(list, MathConstants);
 	GetBuiltInConstants(list, StdboolConstants);
 	GetBuiltInConstants(list, StdTimeConstants);
