@@ -11,16 +11,16 @@
 void IncludeInit(Picoc *pc)
 {
 #ifndef BUILTIN_MINI_STDLIB
-    IncludeRegister(pc, "ctype.h", NULL, &StdCtypeFunctions[0], NULL);
-    IncludeRegister(pc, "errno.h", &StdErrnoSetupFunc, NULL, NULL);
+    IncludeRegister(pc, "ctype.h", NULL, &StdCtypeFunctions[0], NULL, NULL);
+    IncludeRegister(pc, "errno.h", &StdErrnoSetupFunc, NULL, NULL, NULL);
 # ifndef NO_FP
-    IncludeRegister(pc, "math.h", &MathSetupFunc, &MathFunctions[0], NULL);
+    IncludeRegister(pc, "math.h", &MathSetupFunc, &MathFunctions[0], &MathConstants[0], NULL);
 # endif
-    IncludeRegister(pc, "stdbool.h", &StdboolSetupFunc, NULL, StdboolDefs);
-    IncludeRegister(pc, "stdio.h", &StdioSetupFunc, &StdioFunctions[0], StdioDefs);
-    IncludeRegister(pc, "stdlib.h", &StdlibSetupFunc, &StdlibFunctions[0], NULL);
-    IncludeRegister(pc, "string.h", &StringSetupFunc, &StringFunctions[0], NULL);
-    IncludeRegister(pc, "time.h", &StdTimeSetupFunc, &StdTimeFunctions[0], StdTimeDefs);
+    IncludeRegister(pc, "stdbool.h", &StdboolSetupFunc, NULL, &StdboolConstants[0], StdboolDefs);
+    IncludeRegister(pc, "stdio.h", &StdioSetupFunc, &StdioFunctions[0], NULL, StdioDefs);
+    IncludeRegister(pc, "stdlib.h", &StdlibSetupFunc, &StdlibFunctions[0], NULL, NULL);
+    IncludeRegister(pc, "string.h", &StringSetupFunc, &StringFunctions[0], NULL, NULL);
+    IncludeRegister(pc, "time.h", &StdTimeSetupFunc, &StdTimeFunctions[0], &StdTimeConstants[0], StdTimeDefs);
 # if 0//ndef WIN32
     IncludeRegister(pc, "unistd.h", &UnistdSetupFunc, &UnistdFunctions[0], UnistdDefs);
 # endif
@@ -44,7 +44,7 @@ void IncludeCleanup(Picoc *pc)
 }
 
 /* register a new build-in include file */
-void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, const char *SetupCSource)
+void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, struct LibraryConstant *CstList, const char *SetupCSource)
 {
     /*struct IncludeLibrary *NewLib = HeapAllocMem(pc, sizeof(struct IncludeLibrary));
     NewLib->IncludeName = TableStrRegister(pc, IncludeName);
@@ -60,6 +60,9 @@ void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(P
 	// run an extra startup function if there is one 
 	if (SetupFunction != NULL)
 		SetupFunction(pc);
+
+	if (CstList != NULL)
+		LibraryAddConstants(pc, CstList);
 
 	// parse the setup C source code - may define types etc. 
 	if (SetupCSource != NULL)
@@ -124,7 +127,21 @@ void GetBuiltInFunction(std::string& list, LibraryFunction* lib)
 	}
 }
 
-void GetBuiltInFunction(std::string& list)
+void GetBuiltInConstants(std::string& list, LibraryConstant* lib)
+{
+	for (int Count = 0; lib[Count].CstValue != NULL; Count++)
+	{
+		list.append(lib[Count].Name);
+		list.append(" = ");
+		if (lib[Count].Type == TypeInt)
+			list.append(std::to_string(lib[Count].CstValue->Integer));
+		else if (lib[Count].Type == TypeFP)
+			list.append(std::to_string(lib[Count].CstValue->FP));
+		list.push_back('\n');
+	}
+}
+
+void GetBuiltInFunctionConstants(std::string& list)
 {
 	GetBuiltInFunction(list, MathFunctions);
 	GetBuiltInFunction(list, StdCtypeFunctions);
@@ -132,6 +149,10 @@ void GetBuiltInFunction(std::string& list)
 	GetBuiltInFunction(list, StdlibFunctions);
 	GetBuiltInFunction(list, StringFunctions);
 	GetBuiltInFunction(list, StdTimeFunctions);
+	list.append("\n\n");
+	GetBuiltInConstants(list, MathConstants);
+	GetBuiltInConstants(list, StdboolConstants);
+	GetBuiltInConstants(list, StdTimeConstants);
 }
 
 #endif /* NO_HASH_INCLUDE */

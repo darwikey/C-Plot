@@ -616,7 +616,7 @@ void Application::fillDefaultSourceCode()
 void Application::showBuiltInFunctions()
 {
 	std::string list;
-	GetBuiltInFunction(list);
+	GetBuiltInFunctionConstants(list);
 	const char* str = list.c_str();
 
 	sf::Text text("", *mGui.getFont(), 12);

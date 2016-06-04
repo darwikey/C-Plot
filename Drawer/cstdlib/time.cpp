@@ -109,20 +109,31 @@ struct LibraryFunction StdTimeFunctions[] =
 };
 
 
+LibraryConstant StdTimeConstants[] =
+{
+	LibraryConstant((union AnyValue *)&CLOCKS_PER_SECValue, TypeInt, "CLOCKS_PER_SEC"),
+#ifdef CLK_PER_SEC
+	LibraryConstant((union AnyValue *)&CLK_PER_SECValue, TypeInt, "CLK_PER_SEC"),
+#endif
+	LibraryConstant((union AnyValue *)&CLK_TCKValue, TypeInt, "CLK_TCK"),
+	LibraryConstant(NULL, TypeInt, NULL)
+};
+
+
 /* creates various system-dependent definitions */
 void StdTimeSetupFunc(Picoc *pc)
 {
     /* make a "struct tm" which is the same size as a native tm structure */
     TypeCreateOpaqueStruct(pc, NULL, TableStrRegister(pc, "tm"), sizeof(struct tm));
     
-    /* define CLK_PER_SEC etc. */
-    VariableDefinePlatformVar(pc, NULL, "CLOCKS_PER_SEC", &pc->IntType, (union AnyValue *)&CLOCKS_PER_SECValue, FALSE);
-#ifdef CLK_PER_SEC
-    VariableDefinePlatformVar(pc, NULL, "CLK_PER_SEC", &pc->IntType, (union AnyValue *)&CLK_PER_SECValue, FALSE);
-#endif
-#ifdef CLK_TCK
-    VariableDefinePlatformVar(pc, NULL, "CLK_TCK", &pc->IntType, (union AnyValue *)&CLK_TCKValue, FALSE);
-#endif
+//    /* define CLK_PER_SEC etc. */
+//    VariableDefinePlatformVar(pc, NULL, "CLOCKS_PER_SEC", &pc->IntType, (union AnyValue *)&CLOCKS_PER_SECValue, FALSE);
+//#ifdef CLK_PER_SEC
+//    VariableDefinePlatformVar(pc, NULL, "CLK_PER_SEC", &pc->IntType, (union AnyValue *)&CLK_PER_SECValue, FALSE);
+//#endif
+//#ifdef CLK_TCK
+//    VariableDefinePlatformVar(pc, NULL, "CLK_TCK", &pc->IntType, (union AnyValue *)&CLK_TCKValue, FALSE);
+//#endif
 }
 
 #endif /* !BUILTIN_MINI_STDLIB */

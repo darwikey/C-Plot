@@ -303,6 +303,15 @@ struct LibraryFunction
     const char *Prototype;
 };
 
+/* library function definition */
+struct LibraryConstant
+{
+	LibraryConstant(AnyValue* fValue, BaseType fType, const char *fName) : CstValue(fValue), Type(fType), Name(fName) {}
+	AnyValue* CstValue;
+	BaseType Type;
+	const char *Name;
+};
+
 /* output stream-type specific state information */
 union OutputStreamInfo
 {
@@ -556,7 +565,7 @@ int VariableDefined(Picoc *pc, const char *Ident);
 int VariableDefinedAndOutOfScope(Picoc *pc, const char *Ident);
 void VariableRealloc(struct ParseState *Parser, struct Value *FromValue, int NewSize);
 void VariableGet(Picoc *pc, struct ParseState *Parser, const char *Ident, struct Value **LVal);
-void VariableDefinePlatformVar(Picoc *pc, struct ParseState *Parser, char *Ident, struct ValueType *Typ, union AnyValue *FromValue, int IsWritable);
+void VariableDefinePlatformVar(Picoc *pc, struct ParseState *Parser, const char *Ident, struct ValueType *Typ, union AnyValue *FromValue, int IsWritable);
 void VariableStackFrameAdd(struct ParseState *Parser, const char *FuncName, int NumParams);
 void VariableStackFramePop(struct ParseState *Parser);
 struct Value *VariableStringLiteralGet(Picoc *pc, char *Ident);
@@ -569,6 +578,7 @@ void VariableScopeEnd(struct ParseState * Parser, int ScopeID, int PrevScopeID);
 void BasicIOInit(Picoc *pc);
 void LibraryInit(Picoc *pc);
 void LibraryAdd(Picoc *pc, struct Table *GlobalTable, const char *LibraryName, struct LibraryFunction *FuncList);
+void LibraryAddConstants(Picoc* pc, LibraryConstant* CstList);
 void CLibraryInit(Picoc *pc);
 void PrintCh(char OutCh, Picoc* pc);
 void PrintSimpleInt(long Num, IOFILE *Stream);
@@ -603,9 +613,9 @@ char *PlatformMakeTempName(Picoc *pc, char *TempNameBuffer);
 /* include.c */
 void IncludeInit(Picoc *pc);
 void IncludeCleanup(Picoc *pc);
-void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, const char *SetupCSource);
+void IncludeRegister(Picoc *pc, const char *IncludeName, void (*SetupFunction)(Picoc *pc), struct LibraryFunction *FuncList, struct LibraryConstant *CstList, const char *SetupCSource);
 void IncludeFile(Picoc *pc, char *Filename);
-void GetBuiltInFunction(std::string& list);
+void GetBuiltInFunctionConstants(std::string& list);
 /* the following is defined in picoc.h:
  * void PicocIncludeAllSystemHeaders(); */
  
@@ -622,6 +632,7 @@ void StdioSetupFunc(Picoc *pc);
 
 /* math.c */
 extern struct LibraryFunction MathFunctions[];
+extern LibraryConstant MathConstants[];
 void MathSetupFunc(Picoc *pc);
 
 /* string.c */
@@ -635,6 +646,7 @@ void StdlibSetupFunc(Picoc *pc);
 /* time.c */
 extern const char StdTimeDefs[];
 extern struct LibraryFunction StdTimeFunctions[];
+extern LibraryConstant StdTimeConstants[];
 void StdTimeSetupFunc(Picoc *pc);
 
 /* errno.c */
@@ -645,6 +657,7 @@ extern struct LibraryFunction StdCtypeFunctions[];
 
 /* stdbool.c */
 extern const char StdboolDefs[];
+extern LibraryConstant StdboolConstants[];
 void StdboolSetupFunc(Picoc *pc);
 
 /* unistd.c */

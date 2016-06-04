@@ -50,6 +50,27 @@ void LibraryAdd(Picoc *pc, struct Table *GlobalTable, const char *LibraryName, s
     }
 }
 
+void LibraryAddConstants(Picoc* pc, LibraryConstant* CstList)
+{
+	for (int Count = 0; CstList[Count].CstValue != NULL; Count++)
+	{
+		switch (CstList[Count].Type)
+		{
+		case TypeInt:
+			VariableDefinePlatformVar(pc, NULL, CstList[Count].Name, &pc->IntType, CstList[Count].CstValue, FALSE);
+			break;
+
+		case TypeFP:
+			VariableDefinePlatformVar(pc, NULL, CstList[Count].Name, &pc->FPType, CstList[Count].CstValue, FALSE);
+			break;
+
+		default:
+			ProgramFailNoParser(pc, "invalid type in LibrairyAdd");
+			break;
+		}
+	}
+}
+
 /* print a type to a stream without using printf/sprintf */
 void PrintType(struct ValueType *Typ, Picoc* pc)
 {
