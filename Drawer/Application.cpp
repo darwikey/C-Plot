@@ -615,14 +615,51 @@ void Application::show3DGraph()
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 {
-	// remove \r
+	sf::String str;
+	int indent = 0;
 	for (size_t i = 0; i < source->getText().getSize(); i++)
 	{
-		if (source->getText()[i] == '\r')
+		sf::Uint32 c = source->getText()[i];
+		// remove \r
+		switch (c)
 		{
-			source->getText()[i] = ' ';
+		case '{':
+			indent++;
+			str += c;
+			break;
+
+		case '}':
+			indent--;
+			str += c;
+			break;
+
+		case '\n':
+		{
+			str += c;
+
+			bool isEndparentesis = false;
+			for (size_t j = i + 1; j < source->getText().getSize() && source->getText()[j] != '\n'; j++)
+			{
+				if (source->getText()[j] == '}')
+					isEndparentesis = true;
+			}
+
+			for (int i = 0; i < indent - (int)isEndparentesis; i++)
+				str += "    ";
+			for (size_t j = i + 1; j < source->getText().getSize() && source->getText()[j] == ' '; i++, j++)
+			{}
+			break;
+		}
+		case '\r':
+			break;
+
+		default:
+			str += c;
+			break;
 		}
 	}
+	source->setText(str);
+
 	mMutex.lock();
 	mSourceCodeHistory.push_back(mSourceCode);
 	if (mSourceCodeHistory.size() > 50)//limit the size of the history
