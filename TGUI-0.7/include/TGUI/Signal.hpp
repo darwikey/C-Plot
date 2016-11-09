@@ -31,6 +31,7 @@
 #include <TGUI/Callback.hpp>
 
 #include <map>
+#include <deque>
 #include <memory>
 #include <cassert>
 #include <functional>
@@ -51,7 +52,7 @@ namespace tgui
 
     namespace priv
     {
-        extern TGUI_API std::vector<const void*> data;
+        extern TGUI_API std::deque<const void*> data;
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -142,6 +143,12 @@ namespace tgui
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Ignore warning "C4800: 'const int': forcing value to bool 'true' or 'false' (performance warning)" in Visual Studio
+#if defined SFML_SYSTEM_WINDOWS && defined _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4800)
+#endif
+
         template <typename... T>
         struct connector;
 
@@ -174,21 +181,25 @@ namespace tgui
             }
         };
 
+#if defined SFML_SYSTEM_WINDOWS && defined _MSC_VER
+    #pragma warning(pop)
+#endif
+
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        template <typename Func, typename Arg, typename = void>
+        template <typename Arg, typename = void>
         struct bindRemover
         {
-            static const Arg& remove(Func, const Arg& arg)
+            static Arg remove(Arg arg)
             {
                 return arg;
             }
         };
 
-        template <typename Func, typename Arg>
-        struct bindRemover<Func, Arg, typename std::enable_if<std::is_bind_expression<Arg>::value>::type>
+        template <typename Arg>
+        struct bindRemover<Arg, typename std::enable_if<std::is_bind_expression<Arg>::value>::type>
         {
-            static auto remove(Func, const Arg& arg) -> decltype(arg())
+            static auto remove(Arg arg) -> decltype(arg())
             {
                 return arg();
             }
@@ -233,7 +244,7 @@ namespace tgui
         template <typename Func, typename... Args>
         void connect(unsigned int id, Func func, Args... args)
         {
-            using type = typename priv::isFunctionConvertible<Func, decltype(priv::bindRemover<Func, Args>::remove(func, args))...>::type;
+            using type = typename priv::isFunctionConvertible<Func, decltype(priv::bindRemover<Args>::remove(args))...>::type;
             static_assert(!std::is_same<type, TypeSet<void>>::value, "Parameters passed to the connect function are wrong!");
 
             auto argPos = checkCompatibleParameterType<type>();
@@ -250,7 +261,7 @@ namespace tgui
 
         void disconnectAll();
 
-        bool isEmpty();
+        bool isEmpty() const;
 
         void operator()(unsigned int count);
 
@@ -494,16 +505,24 @@ namespace tgui
         void sendSignal(std::string&& name, Args... args)
         {
             assert(m_signals[toLower(name)] != nullptr);
-
             auto& signal = *m_signals[toLower(name)];
-            if (!signal.isEmpty())
-                signal(0, args...);
 
-            m_callback.trigger = name;
-            if (!signal.m_functionsEx.empty())
+            if (signal.m_functionsEx.empty())
             {
-                for (auto& function : signal.m_functionsEx)
+                if (!signal.isEmpty())
+                    signal(0, args...);
+            }
+            else // Legacy functions are used
+            {
+                // Copy signal to avoid problems with lifetime when signal handler destroys this object
+                Signal signalCopy = signal;
+
+                m_callback.trigger = name;
+                for (const auto& function : signalCopy.m_functionsEx)
                     function.second(m_callback);
+
+                if (!signalCopy.isEmpty())
+                    signalCopy(0, args...);
             }
         }
 

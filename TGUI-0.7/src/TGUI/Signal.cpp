@@ -31,7 +31,7 @@ namespace tgui
 {
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    std::vector<const void*> priv::data;
+    std::deque<const void*> priv::data; // deque because vector could reallocate when resizing after parameters are already bound
     unsigned int SignalWidgetBase::m_lastId = 0;
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -64,7 +64,7 @@ namespace tgui
 
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    bool Signal::isEmpty()
+    bool Signal::isEmpty() const
     {
         return m_functions.empty();
     }
@@ -73,7 +73,9 @@ namespace tgui
 
     void Signal::operator()(unsigned int)
     {
-        for (auto& function : m_functions)
+        // Copy the functions in case one of the functions destroys the widget to which this Signal instance belongs
+        auto functions = m_functions;
+        for (const auto& function : functions)
             function.second();
     }
 
