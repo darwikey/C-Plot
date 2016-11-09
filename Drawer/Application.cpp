@@ -158,6 +158,8 @@ int Application::main()
 				else if (drag == DRAG_DELIMITATOR)
 				{
 					mDelimitatorRatio = (float)sf::Mouse::getPosition(mWindow).x / mWindow.getSize().x;
+					mDelimitatorRatio = std::max(std::min(mDelimitatorRatio, 0.9f), 0.f);
+					mMainContainer->setSize(mDelimitatorRatio * tgui::bindWidth(mGui) - 20, tgui::bindHeight(mGui));
 				}
 				mSourceDirty = true;
 			}
@@ -231,8 +233,8 @@ int Application::main()
 		mMutex.unlock();
 
 		// Progression bar
-		sf::RectangleShape bar (sf::Vector2f(mProgression * 0.25f * mGui.getSize().x, 3.f));
-		bar.setPosition(0, 15);
+		sf::RectangleShape bar (sf::Vector2f(mMainContainer->getSize().x, 3.f));
+		bar.setPosition(10, 15);
 		bar.setFillColor(sf::Color(50, 50, 255));
 		bar.setOutlineThickness(1.f);
 		bar.setOutlineColor(sf::Color::Blue);
@@ -734,13 +736,15 @@ void Application::loadWidgets()
 	// Load the black theme
 	auto theme = std::make_shared<tgui::Theme>();// "TGUI/widgets/Black.txt");
 
-	auto windowWidth = tgui::bindWidth(mGui);
 	auto windowHeight = tgui::bindHeight(mGui);
 
+	mMainContainer = std::make_shared<tgui::VerticalLayout>();
+	mMainContainer->setSize(mDelimitatorRatio * tgui::bindWidth(mGui) - 20, windowHeight);
+	mGui.add(mMainContainer, "Main");
 
 	// Create the source code edit box
 	mSourceCodeEditBox = theme->load("TextBox");
-	mSourceCodeEditBox->setSize(windowWidth * 0.25f, windowHeight - 200);
+	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200);
 	mSourceCodeEditBox->setPosition(10, 30);
 	mGui.add(mSourceCodeEditBox, "Code");
 	mSourceCodeEditBox->connect("TextChanged", &Application::callbackTextEdit, this, mSourceCodeEditBox);
@@ -750,7 +754,7 @@ void Application::loadWidgets()
 
 	// Create buttons
 	tgui::Button::Ptr functionButton = theme->load("Button");
-	functionButton->setSize(windowWidth * 0.25f, 25);
+	functionButton->setSize(tgui::bindWidth(mMainContainer), 25);
 	functionButton->setPosition(10, windowHeight -150);
 	functionButton->setText("Show built-in functions");
 	mGui.add(functionButton);
@@ -759,7 +763,7 @@ void Application::loadWidgets()
 	});
 
 	tgui::Button::Ptr resetButton = theme->load("Button");
-	resetButton->setSize(windowWidth * 0.25f, 25);
+	resetButton->setSize(tgui::bindWidth(mMainContainer), 25);
 	resetButton->setPosition(10, windowHeight - 120);
 	resetButton->setText("Reset interpreter");
 	mGui.add(resetButton);
@@ -770,7 +774,7 @@ void Application::loadWidgets()
 
 	tgui::ComboBox::Ptr coordinateBox = theme->load("ComboBox");
 	coordinateBox->setSize(170, 20);
-	coordinateBox->setPosition(windowWidth * 0.25f + 60.f, 10.f);
+	coordinateBox->setPosition(tgui::bindWidth(mMainContainer) + 60.f, 10.f);
 	coordinateBox->addItem("Cartesian coordinates");
 	coordinateBox->addItem("Polar coordinates");
 	coordinateBox->addItem("3D curve");
@@ -789,7 +793,7 @@ void Application::loadWidgets()
 
 	tgui::CheckBox::Ptr highDefBox = theme->load("CheckBox");
 	highDefBox->setSize(20, 20);
-	highDefBox->setPosition(windowWidth * 0.25f + 250.f, 10.f);
+	highDefBox->setPosition(tgui::bindWidth(mMainContainer) + 250.f, 10.f);
 	highDefBox->setText("High Def");
 	mGui.add(highDefBox);
 	highDefBox->connect("checked", [this]() {

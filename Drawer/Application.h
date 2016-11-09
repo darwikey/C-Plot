@@ -54,6 +54,7 @@ private:
 
 	sf::RenderWindow          mWindow;
 	tgui::Gui                 mGui;
+	tgui::VerticalLayout::Ptr mMainContainer;
 	tgui::TextBox::Ptr        mSourceCodeEditBox;
 	std::thread*              mThread = nullptr;
 	mutable sf::Mutex         mMutex;
