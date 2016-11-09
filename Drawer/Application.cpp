@@ -17,9 +17,6 @@ void Application::init()
 	// Disable lighting
 	glDisable(GL_LIGHTING);
 
-	// Configure the viewport (the same size as the window)
-	glViewport((GLsizei)(mWindow.getSize().x * 0.25f), 0, (GLsizei)(mWindow.getSize().x*0.75f), mWindow.getSize().y);
-
 	// Setup a perspective projection
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -158,16 +155,25 @@ int Application::main()
 					mGraphRect.height = dragGraphRect.height * pow(2.f, delta.y * 0.01f);
 					mGraphRect.top = center - 0.5f * mGraphRect.height;
 				}
+				else if (drag == DRAG_DELIMITATOR)
+				{
+					mDelimitatorRatio = (float)sf::Mouse::getPosition(mWindow).x / mWindow.getSize().x;
+				}
 				mSourceDirty = true;
 			}
-			else if ((float)sf::Mouse::getPosition(mWindow).x > 0.25f * mGui.getSize().x)
+			else 
 			{
-				if (isMouseOverXAxis())
-					drag = DRAG_X;
-				else if (isMouseOverYAxis())
-					drag = DRAG_Y;
-				else
-					drag = DRAG_XY;
+				if (isMouseOverDelimitator())
+					drag = DRAG_DELIMITATOR;
+				else if ((float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mGui.getSize().x)
+				{
+					if (isMouseOverXAxis())
+						drag = DRAG_X;
+					else if (isMouseOverYAxis())
+						drag = DRAG_Y;
+					else
+						drag = DRAG_XY;
+				}
 				dragPosition = sf::Vector2f(mGraphRect.left, mGraphRect.top);
 				dragMousePosition = sf::Mouse::getPosition();
 				dragGraphRect = mGraphRect;
@@ -187,17 +193,23 @@ int Application::main()
 		// Draw all created widgets
 		mWindow.pushGLStates();
 
+		// delimitator
+		sf::RectangleShape delimitator(sf::Vector2f(5.f, mGui.getSize().y));
+		delimitator.setPosition(mGui.getSize().x * mDelimitatorRatio, 0);
+		delimitator.setFillColor(sf::Color(128, 128, 128));
+		mWindow.draw(delimitator);
+
 		// UI
 		if (!mShowFunctionList)
 		{
 			sf::RectangleShape rect(sf::Vector2f(100, 20));
-			rect.setPosition(mGui.getSize().x * 0.25f + 250.f, 10.f);
+			rect.setPosition(mGui.getSize().x * mDelimitatorRatio + 250.f, 10.f);
 			mWindow.draw(rect);
 		}
 		mGui.draw();
 
 		// Curve
-		mGraphScreen = sf::FloatRect(mGui.getSize().x * 0.25f + 30.f, 100.f, mGui.getSize().x * 0.65f, mGui.getSize().y - 200.f);
+		mGraphScreen = sf::FloatRect(mGui.getSize().x * mDelimitatorRatio + 30.f, 100.f, mGui.getSize().x * (1.f - mDelimitatorRatio) - 100.f, mGui.getSize().y - 200.f);
 
 		if (mShowFunctionList)
 		{
@@ -493,6 +505,8 @@ void Application::show3DGraph()
 		return;
 	}
 
+	glViewport((GLsizei)(mWindow.getSize().x * mDelimitatorRatio), 0, (GLsizei)(mWindow.getSize().x*(1.f - mDelimitatorRatio)), mWindow.getSize().y);
+
 	// Clear the depth buffer
 	glClear(GL_DEPTH_BUFFER_BIT);
 
@@ -615,12 +629,12 @@ void Application::show3DGraph()
 
 void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 {
+	// Auto indentation
 	sf::String str;
 	int indent = 0;
 	for (size_t i = 0; i < source->getText().getSize(); i++)
 	{
 		sf::Uint32 c = source->getText()[i];
-		// remove \r
 		switch (c)
 		{
 		case '{':
@@ -690,7 +704,7 @@ void Application::showBuiltInFunctions()
 	const char* str = list.c_str();
 
 	sf::Text text("", *mGui.getFont(), 12);
-	text.setPosition(mGui.getSize().x * 0.25f + 30.f, 30.f);
+	text.setPosition(mGui.getSize().x * mDelimitatorRatio + 30.f, 30.f);
 	text.setColor(sf::Color::White);
 
 	const char* strEnd = str + list.length();
@@ -816,6 +830,11 @@ bool Application::isMouseOverYAxis()
 	float middleX = -mGraphRect.left / mGraphRect.width;
 	float axis = mGraphScreen.left + middleX*mGraphScreen.width;
 	return fabs(axis - sf::Mouse::getPosition(mWindow).x) < 10.f;
+}
+
+bool Application::isMouseOverDelimitator()
+{
+	return fabs(mWindow.getSize().x * mDelimitatorRatio - sf::Mouse::getPosition(mWindow).x) < 5.f;
 }
 
 std::vector<float> Application::computeAxisGraduation(float min, float max) const

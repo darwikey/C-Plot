@@ -21,6 +21,7 @@ enum enumDragMode
 	DRAG_X,
 	DRAG_Y,
 	DRAG_XY,
+	DRAG_DELIMITATOR
 };
 
 class Application
@@ -45,6 +46,7 @@ private:
 	sf::Vector2f       convertScreenCoordToGraph(const sf::Vector2f& point) const;
 	bool               isMouseOverXAxis();
 	bool               isMouseOverYAxis();
+	bool               isMouseOverDelimitator();
 	std::vector<float> computeAxisGraduation(float min, float max) const;
 	float              getAccurateYValue(float x) const;
 	sf::Color          rainbowColor(float i);
@@ -64,6 +66,7 @@ private:
 	int                       mCurveWidth = 32;
 	int                       mNumPoint2D = 1024;
 	int                       mNumPoint3D = 32;
+	float                     mDelimitatorRatio = 0.25f;
 	sf::FloatRect             mGraphRect = sf::FloatRect(-10.f, -10.f, 20.f, 20.f);
 	sf::FloatRect             mGraphScreen;
 	sf::Text                  mErrorMessage;
