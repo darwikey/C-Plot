@@ -575,7 +575,6 @@ void LibraryInit(Picoc *pc);
 void LibraryAdd(Picoc *pc, struct Table *GlobalTable, const char *LibraryName, struct LibraryFunction *FuncList);
 void LibraryAddConstants(Picoc* pc, LibraryConstant* CstList);
 void CLibraryInit(Picoc *pc);
-void PrintCh(char OutCh, Picoc* pc);
 void PrintSimpleInt(long Num, IOFILE *Stream);
 void PrintInt(long Num, int FieldWidth, int ZeroPad, int LeftJustify, IOFILE *Stream);
 void PrintStr(const char *Str, IOFILE *Stream);
@@ -600,7 +599,8 @@ void PlatformCleanup(Picoc *pc);
 char *PlatformGetLine(char *Buf, int MaxLen, const char *Prompt);
 int PlatformGetCharacter();
 void PlatformPutc(unsigned char OutCh, union OutputStreamInfo *);
-void PlatformPrint(Picoc *pc, const std::string &error);
+void PlatformPrintError(Picoc *pc, const std::string &error);
+void PlatformPrintError(Picoc *pc, char c);
 void PlatformExit(Picoc *pc, int ExitVal);
 char *PlatformMakeTempName(Picoc *pc, char *TempNameBuffer);
 

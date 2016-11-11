@@ -134,41 +134,41 @@ void PrintSourceTextErrorLine(Picoc *pc, const char *FileName, const char *Sourc
         
         /* display the line */
 		for (CPos = LinePos; *CPos != '\n' && *CPos != '\0'; CPos++)
-			PrintCh(*CPos, pc);
-        PrintCh('\n', pc);
+			PlatformPrintError(pc, *CPos);
+		PlatformPrintError(pc, '\n');
         
         /* display the error position */
         for (CPos = LinePos, CCount = 0; *CPos != '\n' && *CPos != '\0' && (CCount < CharacterPos || *CPos == ' '); CPos++, CCount++)
         {
             if (*CPos == '\t')
-                PrintCh('\t', pc);
+				PlatformPrintError(pc, '\t');
             else
-                PrintCh(' ', pc);
+				PlatformPrintError(pc, ' ');
         }
     }
     else
     {
         /* assume we're in interactive mode - try to make the arrow match up with the input text */
         for (CCount = 0; CCount < CharacterPos + (int)strlen(INTERACTIVE_PROMPT_STATEMENT); CCount++)
-            PrintCh(' ', pc);
+			PlatformPrintError(pc, ' ');
     }
-    PlatformPrint(pc, "line");
-	PlatformPrint(pc, std::to_string(Line));
-	PlatformPrint(pc, ": ");
+    PlatformPrintError(pc, "line");
+	PlatformPrintError(pc, std::to_string(Line));
+	PlatformPrintError(pc, ": ");
 }
 
 /* exit with a message */
 void ProgramFail(struct ParseState *Parser, const std::string &Message)
 {
       PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
-	PlatformPrint(Parser->pc, Message);
+	PlatformPrintError(Parser->pc, Message);
     PlatformExit(Parser->pc, 1);
 }
 
 /* exit with a message, when we're not parsing a program */
 void ProgramFailNoParser(Picoc *pc, const std::string &Message)
 {
-    PlatformPrint(pc, Message);
+    PlatformPrintError(pc, Message);
     PlatformExit(pc, 1);
 }
 
@@ -176,24 +176,24 @@ void ProgramFailNoParser(Picoc *pc, const std::string &Message)
 void AssignFail(struct ParseState *Parser, const std::string &message, struct ValueType *Type1, struct ValueType *Type2, const char *FuncName, int ParamNo)
 {
     PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
-    PlatformPrint(Parser->pc, "can't ");   
+    PlatformPrintError(Parser->pc, "can't ");   
 	if (FuncName == NULL)
-		PlatformPrint(Parser->pc, "assign");
+		PlatformPrintError(Parser->pc, "assign ");
 	else
-		PlatformPrint(Parser->pc, "set");
+		PlatformPrintError(Parser->pc, "set ");
 
 	if (Type1 != NULL)
 		PrintType(Type1, Parser->pc);
 	
-	PlatformPrint(Parser->pc, message);
+	PlatformPrintError(Parser->pc, message);
 	
 	if (Type2 != NULL)
 		PrintType(Type2, Parser->pc);
 
     if (FuncName != NULL)
-		PlatformPrint(Parser->pc, " in argument " + std::to_string(ParamNo) + " of call to " + std::string(FuncName) + "()");
+		PlatformPrintError(Parser->pc, " in argument " + std::to_string(ParamNo) + " of call to " + std::string(FuncName) + "()");
     
-	PlatformPrint(Parser->pc, "\n");
+	PlatformPrintError(Parser->pc, "\n");
     PlatformExit(Parser->pc, 1);
 }
 
@@ -201,14 +201,19 @@ void AssignFail(struct ParseState *Parser, const std::string &message, struct Va
 void LexFail(Picoc *pc, struct LexState *Lexer, const std::string &Message)
 {
     PrintSourceTextErrorLine(pc, Lexer->FileName, Lexer->SourceText, Lexer->Line, Lexer->CharacterPos);
-    PlatformPrint(pc, Message);
+    PlatformPrintError(pc, Message);
     PlatformExit(pc, 1);
 }
 
 /* printf for compiler error reporting */
-void PlatformPrint(Picoc *pc, const std::string &error)
+void PlatformPrintError(Picoc *pc, const std::string &error)
 {
     pc->ErrorBuffer.append(error);
+}
+
+void PlatformPrintError(Picoc *pc, char c)
+{
+	pc->ErrorBuffer.push_back(c);
 }
 
 /*void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args)

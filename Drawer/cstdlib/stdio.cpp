@@ -715,11 +715,6 @@ void StdioSetupFunc(Picoc *pc)
 }
 
 /* portability-related I/O calls */
-void PrintCh(char OutCh, Picoc* pc)
-{
-    pc->ErrorBuffer.push_back(OutCh);
-}
-
 void PrintSimpleInt(long Num, FILE *Stream)
 {
     fprintf(Stream, "%ld", Num);
