@@ -115,23 +115,26 @@ int Application::main()
 		}
 
 		// Zoom in
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageUp) && timer.getElapsedTime().asMilliseconds() > 10)
+		if (mWindow.hasFocus() && (float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mGui.getSize().x)
 		{
-			timer.restart();
-			ApplyZoomOnGraph(1.02f);
-		}
-		// Zoom out
-		if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageDown) && timer.getElapsedTime().asMilliseconds() > 10)
-		{
-			timer.restart();
-			ApplyZoomOnGraph(0.98f);
-		}
-		if (mouseWheel != 0)
-		{
-			ApplyZoomOnGraph(1.f + 0.15f * mouseWheel);
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageUp) && timer.getElapsedTime().asMilliseconds() > 10)
+			{
+				timer.restart();
+				ApplyZoomOnGraph(1.02f);
+			}
+			// Zoom out
+			if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageDown) && timer.getElapsedTime().asMilliseconds() > 10)
+			{
+				timer.restart();
+				ApplyZoomOnGraph(0.98f);
+			}
+			if (mouseWheel != 0)
+			{
+				ApplyZoomOnGraph(1.f + 0.15f * mouseWheel);
+			}
 		}
 		// mouse
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && mWindow.hasFocus())
 		{
 			if (drag != NO_DRAG)
 			{
