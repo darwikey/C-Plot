@@ -79,6 +79,12 @@ void MathFabs(struct ParseState *Parser, struct Value *ReturnValue, struct Value
     ReturnValue->Val->FP = fabs(Param[0]->Val->FP);
 }
 
+void MathSgn(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
+{
+	double val = Param[0]->Val->FP;
+	ReturnValue->Val->FP = (0.0 < val) - (val < 0.0);
+}
+
 void MathFmod(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs)
 {
     ReturnValue->Val->FP = fmod(Param[0]->Val->FP, Param[1]->Val->FP);
@@ -180,6 +186,7 @@ struct LibraryFunction MathFunctions[] =
     { MathCosh,         "double cosh(double);" },
     { MathExp,          "double exp(double);" },
     { MathFabs,         "double fabs(double);" },
+	{ MathSgn,	        "double sgn(double);" },
     { MathFloor,        "double floor(double);" },
     { MathFmod,         "double fmod(double, double);" },
     { MathFrexp,        "double frexp(double, int *);" },
