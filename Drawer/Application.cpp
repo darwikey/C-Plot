@@ -236,7 +236,7 @@ int Application::main()
 		mMutex.unlock();
 
 		// Progression bar
-		sf::RectangleShape bar (sf::Vector2f(mMainContainer->getSize().x, 3.f));
+		sf::RectangleShape bar (sf::Vector2f(mProgression * mMainContainer->getSize().x, 3.f));
 		bar.setPosition(10, 15);
 		bar.setFillColor(sf::Color(50, 50, 255));
 		bar.setOutlineThickness(1.f);
