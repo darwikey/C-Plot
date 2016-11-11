@@ -205,12 +205,6 @@ int Application::main()
 		mWindow.draw(delimitator);
 
 		// UI
-		if (!mShowFunctionList)
-		{
-			sf::RectangleShape rect(sf::Vector2f(100, 20));
-			rect.setPosition(mGui.getSize().x * mDelimitatorRatio + 250.f, 10.f);
-			mWindow.draw(rect);
-		}
 		mGui.draw();
 
 		// Curve
@@ -794,19 +788,31 @@ void Application::loadWidgets()
 		mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
 	}, coordinateBox);
 
-	tgui::CheckBox::Ptr highDefBox = theme->load("CheckBox");
-	highDefBox->setSize(20, 20);
+	tgui::ComboBox::Ptr highDefBox = theme->load("ComboBox");
+	highDefBox->setSize(100, 20);
 	highDefBox->setPosition(tgui::bindWidth(mMainContainer) + 250.f, 10.f);
-	highDefBox->setText("High Def");
+	highDefBox->addItem("Low Def");
+	highDefBox->addItem("Medium Def");
+	highDefBox->addItem("High Def");
+	highDefBox->setSelectedItemByIndex(1);
 	mGui.add(highDefBox);
-	highDefBox->connect("checked", [this]() {
-		mNumPoint2D = 1500;
-		mNumPoint3D = 64;
-	});
-	highDefBox->connect("unchecked", [this]() {
-		mNumPoint2D = 1024;
-		mNumPoint3D = 32;
-	});
+	highDefBox->connect("ItemSelected", [this](tgui::ComboBox::Ptr box) {
+		switch (box->getSelectedItemIndex())
+		{
+		case 0:
+			mNumPoint2D = 128;
+			mNumPoint3D = 16;
+			break;
+		case 1:
+			mNumPoint2D = 1024;
+			mNumPoint3D = 32;
+			break;
+		case 2:
+			mNumPoint2D = 1500;
+			mNumPoint3D = 64;
+			break;
+		}
+	}, highDefBox);
 
 	mErrorMessage.setFont(*mGui.getFont());
 	mErrorMessage.setCharacterSize(14);
