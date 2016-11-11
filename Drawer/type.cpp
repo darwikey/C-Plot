@@ -42,7 +42,7 @@ struct ValueType *TypeGetMatching(Picoc *pc, struct ParseState *Parser, struct V
         if (AllowDuplicates)
             return ThisType;
         else
-            ProgramFail(Parser, "data type '%s' is already defined", Identifier);
+            ProgramFail(Parser, "data type '" + std::string(Identifier) + "' is already defined");
     }
         
     switch (Base)
@@ -253,7 +253,7 @@ void TypeParseStruct(struct ParseState *Parser, struct ValueType **Typ, int IsSt
         
         /* define it */
         if (!TableSet(pc, (*Typ)->Members, MemberIdentifier, MemberValue, Parser->FileName, Parser->Line, Parser->CharacterPos))
-            ProgramFail(Parser, "member '%s' already defined", &MemberIdentifier);
+            ProgramFail(Parser, "member '" + std::string(MemberIdentifier) + "' already defined");
             
         if (LexGetToken(Parser, NULL, TRUE) != TokenSemicolon)
             ProgramFail(Parser, "semicolon expected");
@@ -311,7 +311,7 @@ void TypeParseEnum(struct ParseState *Parser, struct ValueType **Typ)
     { 
         /* use the already defined enum */
         if ((*Typ)->Members == NULL)
-            ProgramFail(Parser, "enum '%s' isn't defined", EnumIdentifier);
+            ProgramFail(Parser, "enum '" + std::string(EnumIdentifier) + "' isn't defined");
             
         return;
     }

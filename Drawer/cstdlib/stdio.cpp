@@ -331,7 +331,7 @@ int StdioBaseScanf(struct ParseState *Parser, FILE *Stream, char *StrIn, char *F
     void *ScanfArg[MAX_SCANF_ARGS];
     
     if (Args->NumArgs > MAX_SCANF_ARGS)
-        ProgramFail(Parser, "too many arguments to scanf() - %d max", MAX_SCANF_ARGS);
+        ProgramFail(Parser, "too many arguments to scanf() - " + std::to_string(MAX_SCANF_ARGS) + " max");
     
     for (ArgCount = 0; ArgCount < Args->NumArgs; ArgCount++)
     {
@@ -344,7 +344,7 @@ int StdioBaseScanf(struct ParseState *Parser, FILE *Stream, char *StrIn, char *F
             ScanfArg[ArgCount] = &ThisArg->Val->ArrayMem[0];
         
         else
-            ProgramFail(Parser, "non-pointer argument to scanf() - argument %d after format", ArgCount+1);
+            ProgramFail(Parser, "non-pointer argument to scanf() - argument " + std::to_string(ArgCount + 1) + " after format");
     }
     
     if (Stream != NULL)
@@ -717,13 +717,7 @@ void StdioSetupFunc(Picoc *pc)
 /* portability-related I/O calls */
 void PrintCh(char OutCh, Picoc* pc)
 {
-    //putc(OutCh, Stream);
-	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
-	{
-		pc->ErrorBuffer[pc->ErrorBufferLength] = OutCh;
-		pc->ErrorBufferLength++;
-		pc->ErrorBuffer[pc->ErrorBufferLength] = '\0';
-	}
+    pc->ErrorBuffer.push_back(OutCh);
 }
 
 void PrintSimpleInt(long Num, FILE *Stream)

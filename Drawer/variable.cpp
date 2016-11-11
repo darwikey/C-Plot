@@ -279,7 +279,7 @@ struct Value *VariableDefine(Picoc *pc, struct ParseState *Parser, char *Ident, 
     AssignValue->OutOfScope = FALSE;
 
     if (!TableSet(pc, currentTable, Ident, AssignValue, Parser ? ((char *)Parser->FileName) : NULL, Parser ? Parser->Line : 0, Parser ? Parser->CharacterPos : 0))
-        ProgramFail(Parser, "'%s' is already defined", Ident);
+        ProgramFail(Parser, "'" + std::string(Ident) + "' is already defined");
     
     return AssignValue;
 }
@@ -367,9 +367,9 @@ void VariableGet(Picoc *pc, struct ParseState *Parser, const char *Ident, struct
         if (!TableGet(&pc->GlobalTable, Ident, LVal, NULL, NULL, NULL))
         {
             if (VariableDefinedAndOutOfScope(pc, Ident))
-                ProgramFail(Parser, "'%s' is out of scope", Ident);
+                ProgramFail(Parser, "'" + std::string(Ident) + "' is out of scope");
             else
-                ProgramFail(Parser, "'%s' is undefined", Ident);
+				ProgramFail(Parser, "'" + std::string(Ident) + "' is undefined");
         }
     }
 }
@@ -382,7 +382,7 @@ void VariableDefinePlatformVar(Picoc *pc, struct ParseState *Parser, const char 
     SomeValue->Val = FromValue;
     
     if (!TableSet(pc, (pc->TopStackFrame == NULL) ? &pc->GlobalTable : &pc->TopStackFrame->LocalTable, TableStrRegister(pc, Ident), SomeValue, Parser ? Parser->FileName : NULL, Parser ? Parser->Line : 0, Parser ? Parser->CharacterPos : 0))
-        ProgramFail(Parser, "'%s' is already defined", Ident);
+		ProgramFail(Parser, "'" + std::string(Ident) + "' is already defined");
 }
 
 /* free and/or pop the top value off the stack. Var must be the top value on the stack! */

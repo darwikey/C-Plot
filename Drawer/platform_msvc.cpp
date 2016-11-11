@@ -45,7 +45,7 @@ char *PlatformReadFile(Picoc *pc, const char *FileName)
     char *p;
     
     if (stat(FileName, &FileInfo))
-        ProgramFailNoParser(pc, "can't read file %s\n", FileName);
+        ProgramFailNoParser(pc, "can't read file: " + std::string(FileName));
     
     ReadText = (char*)malloc(FileInfo.st_size + 1);
     if (ReadText == NULL)
@@ -53,11 +53,11 @@ char *PlatformReadFile(Picoc *pc, const char *FileName)
         
     InFile = fopen(FileName, "r");
     if (InFile == NULL)
-        ProgramFailNoParser(pc, "can't read file %s\n", FileName);
+		ProgramFailNoParser(pc, "can't read file: " + std::string(FileName));
     
     BytesRead = fread(ReadText, 1, FileInfo.st_size, InFile);
     if (BytesRead == 0)
-        ProgramFailNoParser(pc, "can't read file %s\n", FileName);
+		ProgramFailNoParser(pc, "can't read file: " + std::string(FileName));
 
     ReadText[BytesRead] = '\0';
     fclose(InFile);

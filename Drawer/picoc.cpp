@@ -15,7 +15,7 @@
 
 extern bool gResetParser;
 
-double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, char errorBuffer[ERROR_BUFFER_SIZE])
+double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, std::string &errorBuffer)
 {
 	isCrash = false;
 	gResetParser = false;
@@ -27,7 +27,7 @@ double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, char
 	if (PicocPlatformSetExitPoint(&pc))
 	{
 		isCrash = true;
-		strcpy_s(errorBuffer, ERROR_BUFFER_SIZE, pc.ErrorBuffer);
+		errorBuffer = pc.ErrorBuffer;
 		PicocCleanup(&pc);
 		return pc.PicocExitValue;
 	}

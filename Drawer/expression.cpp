@@ -384,20 +384,20 @@ void ExpressionAssignToPointer(struct ParseState *Parser, struct Value *ToValue,
         ToValue->Val->Pointer = FromValue->Val->Pointer;
     }
     else
-        AssignFail(Parser, " from ", ToValue->Typ, FromValue->Typ, 0, 0, FuncName, ParamNo); 
+        AssignFail(Parser, " from ", ToValue->Typ, FromValue->Typ, FuncName, ParamNo); 
 }
 
 /* assign any kind of value */
 void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct Value *SourceValue, int Force, const char *FuncName, int ParamNo, int AllowPointerCoercion)
 {
     if (!DestValue->IsLValue && !Force) 
-        AssignFail(Parser, "not an lvalue", NULL, NULL, 0, 0, FuncName, ParamNo); 
+        AssignFail(Parser, "not an lvalue", NULL, NULL, FuncName, ParamNo); 
 
 	if (DestValue->Typ == NULL || SourceValue->Typ == NULL)
-		AssignFail(Parser, "incorrect type", NULL, NULL, 0, 0, FuncName, ParamNo);
+		AssignFail(Parser, "incorrect type", NULL, NULL, FuncName, ParamNo);
 
     if (IS_NUMERIC_COERCIBLE(DestValue) && !IS_NUMERIC_COERCIBLE_PLUS_POINTERS(SourceValue, AllowPointerCoercion))
-        AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+        AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, FuncName, ParamNo); 
 
     switch (DestValue->Typ->Base)
     {
@@ -413,7 +413,7 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
 #ifndef NO_FP
         case TypeFP:
             if (!IS_NUMERIC_COERCIBLE_PLUS_POINTERS(SourceValue, AllowPointerCoercion)) 
-                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, FuncName, ParamNo); 
             
             DestValue->Val->FP = ExpressionCoerceFP(SourceValue);
             break;
@@ -461,10 +461,10 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
             }
 
             if (DestValue->Typ != SourceValue->Typ)
-                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, FuncName, ParamNo); 
             
             if (DestValue->Typ->ArraySize != SourceValue->Typ->ArraySize)
-                AssignFail(Parser, "from an array of size %d to one of size %d", NULL, NULL, DestValue->Typ->ArraySize, SourceValue->Typ->ArraySize, FuncName, ParamNo);
+                AssignFail(Parser, "from an array of size " + std::to_string(DestValue->Typ->ArraySize) + " to one of size " + std::to_string(SourceValue->Typ->ArraySize), NULL, NULL, FuncName, ParamNo);
             
             memcpy((void *)DestValue->Val, (void *)SourceValue->Val, TypeSizeValue(DestValue, FALSE));
             break;
@@ -472,13 +472,13 @@ void ExpressionAssign(struct ParseState *Parser, struct Value *DestValue, struct
         case TypeStruct:
         case TypeUnion:
             if (DestValue->Typ != SourceValue->Typ)
-                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, 0, 0, FuncName, ParamNo); 
+                AssignFail(Parser, " from ", DestValue->Typ, SourceValue->Typ, FuncName, ParamNo); 
             
             memcpy((void *)DestValue->Val, (void *)SourceValue->Val, TypeSizeValue(SourceValue, FALSE));
             break;
         
         default:
-            AssignFail(Parser, "", DestValue->Typ, NULL, 0, 0, FuncName, ParamNo); 
+            AssignFail(Parser, "", DestValue->Typ, NULL, FuncName, ParamNo); 
             break;
     }
 }
@@ -1045,8 +1045,13 @@ void ExpressionGetStructElement(struct ParseState *Parser, struct ExpressionStac
     struct Value *Ident;
     
     /* get the identifier following the '.' or '->' */
-    if (LexGetToken(Parser, &Ident, TRUE) != TokenIdentifier)
-        ProgramFail(Parser, "need an structure or union member after '%s'", (Token == TokenDot) ? "." : "->");
+	if (LexGetToken(Parser, &Ident, TRUE) != TokenIdentifier)
+	{
+		if (Token == TokenDot)
+			ProgramFail(Parser, "need an structure or union member after .");
+		else
+			ProgramFail(Parser, "need an structure or union member after ->");
+	}
 
     if (Parser->Mode == RunModeRun)
     { 
@@ -1063,10 +1068,10 @@ void ExpressionGetStructElement(struct ParseState *Parser, struct ExpressionStac
             DerefDataLoc = (char*)VariableDereferencePointer(Parser, ParamVal, &StructVal, NULL, &StructType, NULL);
         
         if (StructType->Base != TypeStruct && StructType->Base != TypeUnion)
-            ProgramFail(Parser, "can't use '%s' on something that's not a struct or union %s", (Token == TokenDot) ? "." : "->", (Token == TokenArrow) ? "pointer" : "");
+            ProgramFail(Parser, "can't use " + ((Token == TokenDot) ? std::string(".") : std::string("->")) + " on something that's not a struct or union " + ((Token == TokenArrow) ? std::string("pointer") : std::string()));
             
         if (!TableGet(StructType->Members, Ident->Val->Identifier, &MemberValue, NULL, NULL, NULL))
-            ProgramFail(Parser, "doesn't have a member called '%s'", Ident->Val->Identifier);
+            ProgramFail(Parser, "doesn't have a member called " + std::string(Ident->Val->Identifier));
         
         /* pop the value - assume it'll still be there until we're done */
         HeapPopStack(Parser->pc, ParamVal, sizeof(struct ExpressionStack) + sizeof(struct Value) + TypeStackSizeValue(StructVal));
@@ -1396,7 +1401,7 @@ void ExpressionParseMacroCall(struct ParseState *Parser, struct ExpressionStack 
                 if (ArgCount < MDef->NumParams)
                     ParamArray[ArgCount] = Param;
                 else
-                    ProgramFail(Parser, "too many arguments to %s()", MacroName);
+                    ProgramFail(Parser, "too many arguments to " + std::string(MacroName) + "()");
             }
             
             ArgCount++;
@@ -1422,10 +1427,10 @@ void ExpressionParseMacroCall(struct ParseState *Parser, struct ExpressionStack 
         struct Value *EvalValue;
         
         if (ArgCount < MDef->NumParams)
-            ProgramFail(Parser, "not enough arguments to '%s'", MacroName);
+            ProgramFail(Parser, "not enough arguments to '" + std::string(MacroName) + "'");
         
         if (MDef->Body.Pos == NULL)
-            ProgramFail(Parser, "'%s' is undefined", MacroName);
+            ProgramFail(Parser, "'" + std::string(MacroName) + "' is undefined");
         
         ParserCopy(&MacroParser, &MDef->Body);
         MacroParser.Mode = Parser->Mode;
@@ -1499,7 +1504,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
                 else
                 {
                     if (!FuncValue->Val->FuncDef.VarArgs)
-                        ProgramFail(Parser, "too many arguments to %s()", FuncName);
+                        ProgramFail(Parser, "too many arguments to " + std::string(FuncName) + "()");
                 }
             }
             
@@ -1524,7 +1529,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
     { 
         /* run the function */
         if (ArgCount < FuncValue->Val->FuncDef.NumParams)
-            ProgramFail(Parser, "not enough arguments to '%s'", FuncName);
+            ProgramFail(Parser, "not enough arguments to '" + std::string(FuncName) + "'");
         
         if (FuncValue->Val->FuncDef.Intrinsic == NULL)
         { 
@@ -1534,7 +1539,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
             int OldScopeID = Parser->ScopeID;
             
             if (FuncValue->Val->FuncDef.Body.Pos == NULL)
-                ProgramFail(Parser, "'%s' is undefined", FuncName);
+                ProgramFail(Parser, "'" + std::string(FuncName) + "' is undefined");
             
             ParserCopy(&FuncParser, &FuncValue->Val->FuncDef.Body);
             VariableStackFrameAdd(Parser, FuncName, FuncValue->Val->FuncDef.Intrinsic ? FuncValue->Val->FuncDef.NumParams : 0);
@@ -1558,7 +1563,7 @@ void ExpressionParseFunctionCall(struct ParseState *Parser, struct ExpressionSta
                     ProgramFail(&FuncParser, "no value returned from a function returning something");
 
                 else if (FuncParser.Mode == RunModeGoto)
-                    ProgramFail(&FuncParser, "couldn't find goto label '%s'", FuncParser.SearchGotoLabel);
+                    ProgramFail(&FuncParser, "couldn't find goto label '" + std::string(FuncParser.SearchGotoLabel) + "'");
             }
             
             VariableStackFramePop(Parser);

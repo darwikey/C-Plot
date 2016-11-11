@@ -103,7 +103,7 @@ void DebugCheckStatement(struct ParseState *Parser)
     /* has the user manually pressed break? */
     if (pc->DebugManualBreak)
     {
-        PlatformPrintf(pc, "break\n");
+        PlatformPrint(pc, "break\n");
         DoBreak = TRUE;
         pc->DebugManualBreak = FALSE;
     }
@@ -115,7 +115,7 @@ void DebugCheckStatement(struct ParseState *Parser)
     /* handle a break */
     if (DoBreak)
     {
-        PlatformPrintf(pc, "Handling a break\n");
+        PlatformPrint(pc, "Handling a break\n");
         PicocParseInteractiveNoStartPrompt(pc, FALSE);
     }
 }

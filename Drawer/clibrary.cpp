@@ -76,27 +76,27 @@ void PrintType(struct ValueType *Typ, Picoc* pc)
 {
     switch (Typ->Base)
     {
-        case TypeVoid:          PlatformPrintf(pc, "void"); break;
-        case TypeInt:           PlatformPrintf(pc, "int"); break;
-        case TypeShort:         PlatformPrintf(pc, "short"); break;
-        case TypeChar:          PlatformPrintf(pc, "char"); break;
-        case TypeLong:          PlatformPrintf(pc, "long"); break;
-        case TypeUnsignedInt:   PlatformPrintf(pc, "unsigned int"); break;
-        case TypeUnsignedShort: PlatformPrintf(pc, "unsigned short"); break;
-        case TypeUnsignedLong:  PlatformPrintf(pc, "unsigned long"); break;
-        case TypeUnsignedChar:  PlatformPrintf(pc, "unsigned char"); break;
+        case TypeVoid:          PlatformPrint(pc, "void"); break;
+        case TypeInt:           PlatformPrint(pc, "int"); break;
+        case TypeShort:         PlatformPrint(pc, "short"); break;
+        case TypeChar:          PlatformPrint(pc, "char"); break;
+        case TypeLong:          PlatformPrint(pc, "long"); break;
+        case TypeUnsignedInt:   PlatformPrint(pc, "unsigned int"); break;
+        case TypeUnsignedShort: PlatformPrint(pc, "unsigned short"); break;
+        case TypeUnsignedLong:  PlatformPrint(pc, "unsigned long"); break;
+        case TypeUnsignedChar:  PlatformPrint(pc, "unsigned char"); break;
 #ifndef NO_FP
-        case TypeFP:            PlatformPrintf(pc, "double"); break;
+        case TypeFP:            PlatformPrint(pc, "double"); break;
 #endif
-        case TypeFunction:      PlatformPrintf(pc, "function"); break;
-        case TypeMacro:         PlatformPrintf(pc, "macro"); break;
-        case TypePointer:       if (Typ->FromType) PrintType(Typ->FromType, pc); PlatformPrintf(pc, "*"); break;
-        case TypeArray:         PrintType(Typ->FromType, pc); PlatformPrintf(pc, "["); if (Typ->ArraySize != 0) PlatformPrintf(pc, "%d", Typ->ArraySize); PlatformPrintf(pc, "]"); break;
-        case TypeStruct:        PlatformPrintf(pc, "struct "); PlatformPrintf(pc, Typ->Identifier); break;
-        case TypeUnion:         PlatformPrintf(pc, "union "); PlatformPrintf(pc, Typ->Identifier); break;
-        case TypeEnum:          PlatformPrintf(pc, "enum "); PlatformPrintf(pc, Typ->Identifier); break;
-        case TypeGotoLabel:     PlatformPrintf(pc, "goto label "); break;
-        case Type_Type:         PlatformPrintf(pc, "type "); break;
+        case TypeFunction:      PlatformPrint(pc, "function"); break;
+        case TypeMacro:         PlatformPrint(pc, "macro"); break;
+        case TypePointer:       if (Typ->FromType) PrintType(Typ->FromType, pc); PlatformPrint(pc, "*"); break;
+		case TypeArray:         PrintType(Typ->FromType, pc); PlatformPrint(pc, "["); if (Typ->ArraySize != 0) PlatformPrint(pc, std::to_string(Typ->ArraySize)); PlatformPrint(pc, "]"); break;
+        case TypeStruct:        PlatformPrint(pc, "struct "); PlatformPrint(pc, Typ->Identifier); break;
+        case TypeUnion:         PlatformPrint(pc, "union "); PlatformPrint(pc, Typ->Identifier); break;
+        case TypeEnum:          PlatformPrint(pc, "enum "); PlatformPrint(pc, Typ->Identifier); break;
+        case TypeGotoLabel:     PlatformPrint(pc, "goto label "); break;
+        case Type_Type:         PlatformPrint(pc, "type "); break;
     }
 }
 

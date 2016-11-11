@@ -77,7 +77,7 @@ struct Value *ParseFunctionDefinition(struct ParseState *Parser, struct ValueTyp
     ParserCopy(&ParamParser, Parser);
     ParamCount = ParseCountParams(Parser);
     if (ParamCount > PARAMETER_MAX)
-        ProgramFail(Parser, "too many parameters (%d allowed)", PARAMETER_MAX);
+        ProgramFail(Parser, "too many parameters (" + std::to_string(PARAMETER_MAX) + " allowed)");
     
     FuncValue = VariableAllocValueAndData(pc, Parser, sizeof(struct FuncDef) + sizeof(struct ValueType *) * ParamCount + sizeof(const char *) * ParamCount, FALSE, NULL, TRUE);
     FuncValue->Typ = &pc->FunctionType;
@@ -158,12 +158,12 @@ struct Value *ParseFunctionDefinition(struct ParseState *Parser, struct ValueTyp
                 VariableFree(pc, TableDelete(pc, &pc->GlobalTable, Identifier));
             }
             else
-                ProgramFail(Parser, "'%s' is already defined", Identifier);
+                ProgramFail(Parser, "'" + std::string(Identifier)  + "' is already defined");
         }
     }
 
     if (!TableSet(pc, &pc->GlobalTable, Identifier, FuncValue, (char *)Parser->FileName, Parser->Line, Parser->CharacterPos))
-        ProgramFail(Parser, "'%s' is already defined", Identifier);
+		ProgramFail(Parser, "'" + std::string(Identifier) + "' is already defined");
         
     return FuncValue;
 }
@@ -185,7 +185,7 @@ int ParseArrayInitialiser(struct ParseState *Parser, struct Value *NewVariable, 
         NumElements = ParseArrayInitialiser(&CountParser, NewVariable, FALSE);
 
         if (NewVariable->Typ->Base != TypeArray)
-            AssignFail(Parser, " from array initializer", NewVariable->Typ, NULL, 0, 0, NULL, 0);
+            AssignFail(Parser, " from array initializer", NewVariable->Typ, NULL, NULL, 0);
 
         if (NewVariable->Typ->ArraySize == 0)
         {
@@ -422,7 +422,7 @@ void ParseMacroDefinition(struct ParseState *Parser)
     MacroValue->Val->MacroDef.Body.Pos = (unsigned char*)LexCopyTokens(&MacroValue->Val->MacroDef.Body, Parser);
     
     if (!TableSet(Parser->pc, &Parser->pc->GlobalTable, MacroNameStr, MacroValue, (char *)Parser->FileName, Parser->Line, Parser->CharacterPos))
-        ProgramFail(Parser, "'%s' is already defined", MacroNameStr);
+		ProgramFail(Parser, "'" + std::string(MacroNameStr) + "' is already defined");
 }
 
 /* copy the entire parser state */
@@ -926,7 +926,7 @@ enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemi
                 CValue = TableDelete(Parser->pc, &Parser->pc->GlobalTable, LexerValue->Val->Identifier);
 
                 if (CValue == NULL)
-                    ProgramFail(Parser, "'%s' is not defined", LexerValue->Val->Identifier);
+                    ProgramFail(Parser, "'" + std::string(LexerValue->Val->Identifier) + "' is not defined");
                 
                 VariableFree(Parser->pc, CValue);
             }
@@ -1016,12 +1016,12 @@ void PicocParseInteractiveNoStartPrompt(Picoc *pc, int EnableDebugger)
     if (Ok == ParseResultError)
         ProgramFail(&Parser, "parse error");
     
-    PlatformPrintf(pc, "\n");
+    PlatformPrint(pc, "\n");
 }
 
 /* parse interactively, showing a startup message */
 void PicocParseInteractive(Picoc *pc)
 {
-    PlatformPrintf(pc, INTERACTIVE_PROMPT_START);
+    PlatformPrint(pc, INTERACTIVE_PROMPT_START);
     PicocParseInteractiveNoStartPrompt(pc, TRUE);
 }

@@ -310,7 +310,7 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	int numPoint = mNumPoint2D;
 	mMutex.unlock();
 	bool isCrash = false;
-	char errorBuffer[1024];
+	std::string errorBuffer;
 
 	for (int i = 0; i < numPoint; i++)
 	{
@@ -350,7 +350,7 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 	curveWidth = mNumPoint3D;
 	mMutex.unlock();
 	bool isCrash = false;
-	char errorBuffer[1024];
+	std::string errorBuffer;
 
 	double point[2];
 	for (int i = 0; i < curveWidth; i++)

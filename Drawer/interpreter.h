@@ -362,7 +362,6 @@ struct IncludeLibrary
 #define FREELIST_BUCKETS 8                          /* freelists for 4, 8, 12 ... 32 byte allocs */
 #define SPLIT_MEM_THRESHOLD 16                      /* don't split memory which is close in size */
 #define BREAKPOINT_TABLE_SIZE 21
-#define ERROR_BUFFER_SIZE 1024
 
 
 /* the entire state of the picoc system */
@@ -454,8 +453,7 @@ struct Picoc_Struct
     int BigEndian;
     int LittleEndian;
 
-	char ErrorBuffer[ERROR_BUFFER_SIZE];
-	unsigned ErrorBufferLength;
+	std::string ErrorBuffer;
 
     /* the picoc version string */
     const char *VersionString;
@@ -593,17 +591,16 @@ void LibPrintf(struct ParseState *Parser, struct Value *ReturnValue, struct Valu
  * void PicocCleanup();
  * void PicocPlatformScanFile(const char *FileName);
  * extern int PicocExitValue; */
-void ProgramFail(struct ParseState *Parser, const char *Message, ...);
-void ProgramFailNoParser(Picoc *pc, const char *Message, ...);
-void AssignFail(struct ParseState *Parser, const char *Format, struct ValueType *Type1, struct ValueType *Type2, int Num1, int Num2, const char *FuncName, int ParamNo);
-void LexFail(Picoc *pc, struct LexState *Lexer, const char *Message, ...);
+void ProgramFail(struct ParseState *Parser, const std::string &Message);
+void ProgramFailNoParser(Picoc *pc, const std::string &Message);
+void AssignFail(struct ParseState *Parser, const std::string &message, struct ValueType *Type1, struct ValueType *Type2, const char *FuncName, int ParamNo);
+void LexFail(Picoc *pc, struct LexState *Lexer, const std::string &Message);
 void PlatformInit(Picoc *pc);
 void PlatformCleanup(Picoc *pc);
 char *PlatformGetLine(char *Buf, int MaxLen, const char *Prompt);
 int PlatformGetCharacter();
 void PlatformPutc(unsigned char OutCh, union OutputStreamInfo *);
-void PlatformPrintf(Picoc *pc, const char *Format, ...);
-void PlatformVPrintf(Picoc *pc, const char *Format, va_list Args);
+void PlatformPrint(Picoc *pc, const std::string &error);
 void PlatformExit(Picoc *pc, int ExitVal);
 char *PlatformMakeTempName(Picoc *pc, char *TempNameBuffer);
 

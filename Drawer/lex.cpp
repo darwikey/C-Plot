@@ -504,7 +504,7 @@ enum LexToken LexScanGetToken(Picoc *pc, struct LexState *Lexer, struct Value **
             case '.': NEXTISEXACTLY3('.', '.', TokenEllipsis, TokenDot); break;
             case '?': GotToken = TokenQuestionMark; break;
             case ':': GotToken = TokenColon; break;
-            default:  LexFail(pc, Lexer, "illegal character '%c'", ThisChar); break;
+			default:  LexFail(pc, Lexer, "illegal character " + std::string(1, ThisChar)); break;
         }
     } while (GotToken == TokenNone);
     
@@ -807,7 +807,7 @@ void LexHashIf(struct ParseState *Parser)
     {
         /* look up a value from a macro definition */
         if (!TableGet(&Parser->pc->GlobalTable, IdentValue->Val->Identifier, &SavedValue, NULL, NULL, NULL))
-            ProgramFail(Parser, "'%s' is undefined", IdentValue->Val->Identifier);
+            ProgramFail(Parser, "'" + std::string(IdentValue->Val->Identifier) + "' is undefined");
         
         if (SavedValue->Typ->Base != TypeMacro)
             ProgramFail(Parser, "value expected");

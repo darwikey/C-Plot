@@ -152,92 +152,63 @@ void PrintSourceTextErrorLine(Picoc *pc, const char *FileName, const char *Sourc
         for (CCount = 0; CCount < CharacterPos + (int)strlen(INTERACTIVE_PROMPT_STATEMENT); CCount++)
             PrintCh(' ', pc);
     }
-    PlatformPrintf(pc, "line %d: ", Line);
-    
+    PlatformPrint(pc, "line");
+	PlatformPrint(pc, std::to_string(Line));
+	PlatformPrint(pc, ": ");
 }
 
 /* exit with a message */
-void ProgramFail(struct ParseState *Parser, const char *Message, ...)
+void ProgramFail(struct ParseState *Parser, const std::string &Message)
 {
-    va_list Args;
-
-    PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
-    va_start(Args, Message);
-	PlatformVPrintf(Parser->pc, Message, Args);
-    va_end(Args);
+      PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
+	PlatformPrint(Parser->pc, Message);
     PlatformExit(Parser->pc, 1);
 }
 
 /* exit with a message, when we're not parsing a program */
-void ProgramFailNoParser(Picoc *pc, const char *Message, ...)
+void ProgramFailNoParser(Picoc *pc, const std::string &Message)
 {
-    va_list Args;
-
-    va_start(Args, Message);
-    PlatformVPrintf(pc, Message, Args);
-    va_end(Args);
+    PlatformPrint(pc, Message);
     PlatformExit(pc, 1);
 }
 
 /* like ProgramFail() but gives descriptive error messages for assignment */
-void AssignFail(struct ParseState *Parser, const char *Format, struct ValueType *Type1, struct ValueType *Type2, int Num1, int Num2, const char *FuncName, int ParamNo)
+void AssignFail(struct ParseState *Parser, const std::string &message, struct ValueType *Type1, struct ValueType *Type2, const char *FuncName, int ParamNo)
 {
     PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
-    PlatformPrintf(Parser->pc, "can't %s ", (FuncName == NULL) ? "assign" : "set");   
-        
+    PlatformPrint(Parser->pc, "can't ");   
+	if (FuncName == NULL)
+		PlatformPrint(Parser->pc, "assign");
+	else
+		PlatformPrint(Parser->pc, "set");
+
 	if (Type1 != NULL)
-	{
 		PrintType(Type1, Parser->pc);
-		PlatformPrintf(Parser->pc, Format);
-		if (Type2 != NULL)
-			PrintType(Type2, Parser->pc);
-	}
-    else
-        PlatformPrintf(Parser->pc, Format, Num1, Num2);
-    
+	
+	PlatformPrint(Parser->pc, message);
+	
+	if (Type2 != NULL)
+		PrintType(Type2, Parser->pc);
+
     if (FuncName != NULL)
-        PlatformPrintf(Parser->pc, " in argument %d of call to %s()", ParamNo, FuncName);
+		PlatformPrint(Parser->pc, " in argument " + std::to_string(ParamNo) + " of call to " + std::string(FuncName) + "()");
     
-    PlatformPrintf(Parser->pc, "\n");
+	PlatformPrint(Parser->pc, "\n");
     PlatformExit(Parser->pc, 1);
 }
 
 /* exit lexing with a message */
-void LexFail(Picoc *pc, struct LexState *Lexer, const char *Message, ...)
+void LexFail(Picoc *pc, struct LexState *Lexer, const std::string &Message)
 {
-    va_list Args;
-
     PrintSourceTextErrorLine(pc, Lexer->FileName, Lexer->SourceText, Lexer->Line, Lexer->CharacterPos);
-    va_start(Args, Message);
-    PlatformVPrintf(pc, Message, Args);
-    va_end(Args);
-    //PlatformPrintf(pc, "\n");
+    PlatformPrint(pc, Message);
     PlatformExit(pc, 1);
 }
 
 /* printf for compiler error reporting */
-void PlatformPrintf(Picoc *pc, const char *Format, ...)
+void PlatformPrint(Picoc *pc, const std::string &error)
 {
-    va_list Args;
-    
-    va_start(Args, Format);
-    //PlatformVPrintf(Stream, Format, Args);
-	
-	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
-	{
-		char* str = pc->ErrorBuffer + pc->ErrorBufferLength;
-		pc->ErrorBufferLength += vsprintf_s(str, ERROR_BUFFER_SIZE - pc->ErrorBufferLength, Format, Args);
-	}
-    va_end(Args);
-}
-
-void PlatformVPrintf(Picoc *pc, const char *Format, va_list Args)
-{	
-	if (pc->ErrorBufferLength < ERROR_BUFFER_SIZE - 1)
-	{
-		char* str = pc->ErrorBuffer + pc->ErrorBufferLength;
-		pc->ErrorBufferLength += vsprintf_s(str, ERROR_BUFFER_SIZE - pc->ErrorBufferLength, Format, Args);
-	}
+    pc->ErrorBuffer.append(error);
 }
 
 /*void PlatformVPrintf(IOFILE *Stream, const char *Format, va_list Args)
