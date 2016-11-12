@@ -134,7 +134,7 @@ int Application::main()
 			}
 		}
 		// mouse
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && mWindow.hasFocus())
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && mWindow.hasFocus() && (float)sf::Mouse::getPosition(mWindow).y < mWindow.getSize().y - 100.f)
 		{
 			if (drag != NO_DRAG)
 			{
@@ -204,9 +204,6 @@ int Application::main()
 		delimitator.setFillColor(sf::Color(128, 128, 128));
 		mWindow.draw(delimitator);
 
-		// UI
-		mGui.draw();
-
 		// Curve
 		mGraphScreen = sf::FloatRect(mGui.getSize().x * mDelimitatorRatio + 30.f, 100.f, mGui.getSize().x * (1.f - mDelimitatorRatio) - 100.f, mGui.getSize().y - 200.f);
 
@@ -236,6 +233,9 @@ int Application::main()
 		bar.setOutlineThickness(1.f);
 		bar.setOutlineColor(sf::Color::Blue);
 		mWindow.draw(bar);
+
+		// UI
+		mGui.draw();
 
 		mWindow.popGLStates();
 		mWindow.display();
@@ -305,6 +305,7 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	float start = mGraphRect.left;
 	std::string buffer = mSourceCode;
 	int numPoint = mNumPoint2D;
+	std::vector<Tweakable> tweakables = mTweakables;
 	mMutex.unlock();
 	bool isCrash = false;
 	std::string errorBuffer;
@@ -322,7 +323,7 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 			x *= 6.283185307179586;
 		}
 
-		float y = (float)parse(buffer.c_str(), &x, 1, isCrash, errorBuffer);
+		float y = (float)parse(buffer.c_str(), &x, 1, tweakables, isCrash, errorBuffer);
 		if (isCrash)
 		{
 			break;
@@ -345,6 +346,7 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 	float start = mGraphRect.left;
 	std::string buffer = mSourceCode;
 	curveWidth = mNumPoint3D;
+	std::vector<Tweakable> tweakables = mTweakables;
 	mMutex.unlock();
 	bool isCrash = false;
 	std::string errorBuffer;
@@ -361,7 +363,7 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 			double posY = (double)j / curveWidth;
 			point[1] = posY * width + start;
 
-			float z = (float)parse(buffer.c_str(), point, 2, isCrash, errorBuffer);
+			float z = (float)parse(buffer.c_str(), point, 2, tweakables, isCrash, errorBuffer);
 			if (isCrash)
 			{
 				break;
@@ -626,14 +628,14 @@ void Application::show3DGraph()
 	mWindow.draw(text);
 }
 
-void Application::callbackTextEdit(tgui::TextBox::Ptr source)
+void Application::callbackTextEdit()
 {
 	// Auto indentation
 	sf::String str;
 	int indent = 0;
-	for (size_t i = 0; i < source->getText().getSize(); i++)
+	for (size_t i = 0; i < mSourceCodeEditBox->getText().getSize(); i++)
 	{
-		sf::Uint32 c = source->getText()[i];
+		sf::Uint32 c = mSourceCodeEditBox->getText()[i];
 		switch (c)
 		{
 		case '{':
@@ -651,15 +653,15 @@ void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 			str += c;
 
 			bool isEndparentesis = false;
-			for (size_t j = i + 1; j < source->getText().getSize() && source->getText()[j] != '\n'; j++)
+			for (size_t j = i + 1; j < mSourceCodeEditBox->getText().getSize() && mSourceCodeEditBox->getText()[j] != '\n'; j++)
 			{
-				if (source->getText()[j] == '}')
+				if (mSourceCodeEditBox->getText()[j] == '}')
 					isEndparentesis = true;
 			}
 
 			for (int i = 0; i < indent - (int)isEndparentesis; i++)
 				str += "    ";
-			for (size_t j = i + 1; j < source->getText().getSize() && source->getText()[j] == ' '; i++, j++)
+			for (size_t j = i + 1; j < mSourceCodeEditBox->getText().getSize() && mSourceCodeEditBox->getText()[j] == ' '; i++, j++)
 			{}
 			break;
 		}
@@ -671,14 +673,14 @@ void Application::callbackTextEdit(tgui::TextBox::Ptr source)
 			break;
 		}
 	}
-	source->setText(str);
+	mSourceCodeEditBox->setText(str);
 
 	mMutex.lock();
 	mSourceCodeHistory.push_back(mSourceCode);
 	if (mSourceCodeHistory.size() > 50)//limit the size of the history
 		mSourceCodeHistory.pop_front();
 	mSourceCodeRedo.clear();
-	mSourceCode = source->getText().toAnsiString();
+	mSourceCode = mSourceCodeEditBox->getText().toAnsiString();
 	mSourceDirty = true;
 	mMutex.unlock();
 }
@@ -693,7 +695,7 @@ void Application::fillDefaultSourceCode()
 	{
 		mSourceCodeEditBox->setText("double main(double x, double y){\n\nreturn sin(x*0.5)*sin(y*0.5);\n}");
 	}
-	callbackTextEdit(mSourceCodeEditBox);
+	callbackTextEdit();
 }
 
 void Application::showBuiltInFunctions()
@@ -728,6 +730,44 @@ void Application::showBuiltInFunctions()
 	}
 }
 
+void Application::callbackAddTweakable(tgui::EditBox::Ptr editBox)
+{
+	std::string text = editBox->getText();
+	if (!text.empty())
+	{
+		// to upper case
+		std::transform(text.begin(), text.end(), text.begin(), ::toupper);
+		addTweakable(text);
+		editBox->setText("");
+		mAddTweakableBox->hide();
+	}
+}
+
+void Application::addTweakable(const std::string& tweakableName)
+{
+	mMutex.lock();
+	mTweakables.push_back(Tweakable(tweakableName));
+	mSourceCodeEditBox->setText(mSourceCode);
+	mMutex.unlock();
+	callbackTextEdit();
+	tgui::Widget::Ptr tweakableContainer = mGui.get("TweakableContainer");
+	tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 25.f * mTweakables.size() + 15);
+	tweakableContainer->show();
+
+	auto theme = std::make_shared<tgui::Theme>();
+	tgui::Button::Ptr button = theme->load("Button");
+	button->setSize(tgui::bindWidth(tweakableContainer) - 20, 20);
+	button->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 25.f * mTweakables.size() - 10);
+	button->setText(tweakableName);
+	mGui.add(button, tweakableName);
+	button->connect("pressed", [this, tweakableName] {
+		auto tweakableSettings = mGui.get("TweakableSettings");
+		tweakableSettings->show();
+		mCurrentTweakable = tweakableName;
+	});
+
+}
+
 void Application::loadWidgets()
 {
 	// Load the black theme
@@ -744,7 +784,7 @@ void Application::loadWidgets()
 	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200);
 	mSourceCodeEditBox->setPosition(10, 30);
 	mGui.add(mSourceCodeEditBox, "Code");
-	mSourceCodeEditBox->connect("TextChanged", &Application::callbackTextEdit, this, mSourceCodeEditBox);
+	mSourceCodeEditBox->connect("TextChanged", &Application::callbackTextEdit, this);
 	
 	// Apply default source code
 	fillDefaultSourceCode();
@@ -817,6 +857,94 @@ void Application::loadWidgets()
 	mErrorMessage.setFont(*mGui.getFont());
 	mErrorMessage.setCharacterSize(14);
 	mErrorMessage.setColor(sf::Color::Red);
+
+	// Tweakables
+	{
+		tgui::Panel::Ptr tweakableContainer = std::make_shared<tgui::Panel>();
+		tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 10.f);
+		tweakableContainer->setPosition(tgui::bindWidth(mGui) - tgui::bindWidth(tweakableContainer) - 10.f, windowHeight - tgui::bindHeight(tweakableContainer) - 10.f);
+		mGui.add(tweakableContainer, "TweakableContainer");
+
+		tgui::Button::Ptr addTweakable = theme->load("Button");
+		addTweakable->setSize(tgui::bindWidth(tweakableContainer) - 20, 25);
+		addTweakable->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 10);
+		addTweakable->setText("Add tweakable");
+		mGui.add(addTweakable);
+		addTweakable->connect("pressed", [this]() {
+			mAddTweakableBox->show();
+		});
+
+		tgui::Panel::Ptr tweakableSettings = std::make_shared<tgui::Panel>();
+		tweakableSettings->setSize(0.25f * tgui::bindWidth(mGui), 70.f);
+		tweakableSettings->setPosition(0.4f * tgui::bindWidth(mGui), windowHeight - 70.f);
+		tweakableSettings->hide();
+		mGui.add(tweakableSettings, "TweakableSettings");
+
+		tgui::Slider::Ptr tweakableSlider = theme->load("Slider");
+		tweakableSlider->setPosition(10, 10);
+		tweakableSlider->setSize(tgui::bindWidth(tweakableSettings) - 20, 10);
+		tweakableSlider->setMaximum(1000);
+		tweakableSettings->add(tweakableSlider);
+		tweakableSlider->connect("ValueChanged", [this, tweakableSlider]() {
+			for (Tweakable& it : mTweakables)
+			{
+				if (it.mName == mCurrentTweakable)
+				{
+					sf::Lock lock(mMutex);
+					it.value = (double)tweakableSlider->getValue() / tweakableSlider->getMaximum();
+					it.value = it.value * (it.max - it.min) + it.min;
+					mSourceDirty = true;
+					return;
+				}
+			}
+		});
+
+		tgui::EditBox::Ptr minEditBox = theme->load("EditBox");
+		minEditBox->setSize(50, 20);
+		minEditBox->setPosition(10, 35);
+		tweakableSettings->add(minEditBox);
+
+		//tgui::Text::Ptr maxEditBox = theme->load("Text");
+		//maxEditBox->setSize(50, 20);
+		//maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
+		//tweakableSettings->add(maxEditBox);
+
+		tgui::EditBox::Ptr maxEditBox = theme->load("EditBox");
+		maxEditBox->setSize(50, 20);
+		maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
+		tweakableSettings->add(maxEditBox);
+	}
+
+	//Confirmation window
+	{
+		mAddTweakableBox = theme->load("Panel");
+		mAddTweakableBox->setSize(400, 200);
+		mAddTweakableBox->setPosition(0.5f * tgui::bindSize(mGui) - sf::Vector2f(200.f, 100.f));
+		mAddTweakableBox->hide();
+		mGui.add(mAddTweakableBox);
+
+		tgui::EditBox::Ptr editBox = theme->load("EditBox");
+		editBox->setSize(200, 25);
+		editBox->setPosition(100, 80);
+		mAddTweakableBox->add(editBox, "EditBox");
+		editBox->connect("ReturnKeyPressed", &Application::callbackAddTweakable, this, editBox);
+
+		tgui::Button::Ptr OKButton = theme->load("Button");
+		OKButton->setSize(50, 25);
+		OKButton->setPosition(50, 150);
+		OKButton->setText("OK");
+		mAddTweakableBox->add(OKButton);
+		OKButton->connect("pressed", &Application::callbackAddTweakable, this, editBox);
+
+		tgui::Button::Ptr CancelButton = theme->load("Button");
+		CancelButton->setSize(50, 25);
+		CancelButton->setPosition(300, 150);
+		CancelButton->setText("Cancel");
+		mAddTweakableBox->add(CancelButton);
+		CancelButton->connect("pressed", [this]{
+			mAddTweakableBox->hide();
+		});
+	}
 }
 
 sf::Vector2f Application::convertGraphCoordToScreen(const sf::Vector2f& point) const

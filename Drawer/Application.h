@@ -4,9 +4,9 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <TGUI/TGUI.hpp>
-#include <string>
 #include <thread>
 #include <chrono>
+#include "Tweakable.h"
 
 enum enumCoordinate
 {
@@ -38,9 +38,11 @@ private:
 	void               ApplyZoomOnGraph(float factor);
 	void               showGraph();
 	void               show3DGraph();
-	void               callbackTextEdit(tgui::TextBox::Ptr source);
+	void               callbackTextEdit();
 	void               fillDefaultSourceCode();
 	void               showBuiltInFunctions();
+	void               callbackAddTweakable(tgui::EditBox::Ptr editbox);
+	void               addTweakable(const std::string& tweakableName);
 	void               loadWidgets();
 	sf::Vector2f       convertGraphCoordToScreen(const sf::Vector2f& point) const;
 	sf::Vector2f       convertScreenCoordToGraph(const sf::Vector2f& point) const;
@@ -56,6 +58,7 @@ private:
 	tgui::Gui                 mGui;
 	tgui::VerticalLayout::Ptr mMainContainer;
 	tgui::TextBox::Ptr        mSourceCodeEditBox;
+	tgui::Panel::Ptr          mAddTweakableBox;
 	std::thread*              mThread = nullptr;
 	mutable sf::Mutex         mMutex;
 	std::string               mSourceCode;
@@ -74,5 +77,6 @@ private:
 	float                     mProgression = 0.f;
 	bool                      mShowFunctionList = false;
 	enumCoordinate            mCoordinate = CARTESIAN;
-
+	std::vector<Tweakable>    mTweakables;
+	std::string               mCurrentTweakable;
 };

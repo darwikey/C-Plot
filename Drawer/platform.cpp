@@ -6,7 +6,7 @@
 
 
 /* initialise everything */
-void PicocInitialise(Picoc *pc, int StackSize)
+void PicocInitialise(Picoc *pc, int StackSize, std::vector<Tweakable>& tweakables)
 {
     PlatformInit(pc);
     BasicIOInit(pc);
@@ -19,6 +19,10 @@ void PicocInitialise(Picoc *pc, int StackSize)
     IncludeInit(pc);
 #endif
     LibraryInit(pc);
+	for (Tweakable& it : tweakables)
+	{
+		VariableDefinePlatformVar(pc, NULL, it.mName.c_str(), &pc->FPType, (union AnyValue *)&it.value, FALSE);
+	}
 #ifdef BUILTIN_MINI_STDLIB
     LibraryAdd(pc, &GlobalTable, "c library", &CLibrary[0]);
     CLibraryInit(pc);
@@ -160,7 +164,7 @@ void PrintSourceTextErrorLine(Picoc *pc, const char *FileName, const char *Sourc
 /* exit with a message */
 void ProgramFail(struct ParseState *Parser, const std::string &Message)
 {
-      PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
+    PrintSourceTextErrorLine(Parser->pc, Parser->FileName, Parser->SourceText, Parser->Line, Parser->CharacterPos);
 	PlatformPrintError(Parser->pc, Message);
     PlatformExit(Parser->pc, 1);
 }

@@ -15,7 +15,7 @@
 
 extern bool gResetParser;
 
-double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, std::string &errorBuffer)
+double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakable>& tweakables, bool& isCrash, std::string &errorBuffer)
 {
 	isCrash = false;
 	gResetParser = false;
@@ -32,7 +32,7 @@ double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, std:
 		return pc.PicocExitValue;
 	}
 
-    PicocInitialise(&pc, StackSize);
+    PicocInitialise(&pc, StackSize, tweakables);
     
         
     //if (0)//argc > ParamCount && strcmp(argv[ParamCount], "-i") == 0)

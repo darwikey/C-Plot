@@ -7,6 +7,8 @@
 
 #include "platform.h"
 #include <string>
+#include <vector>
+#include "Tweakable.h"
 
 /* handy definitions */
 #ifndef TRUE

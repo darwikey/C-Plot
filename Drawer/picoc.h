@@ -18,7 +18,7 @@
 
 #include "interpreter.h"
 
-double parse(const char* fCode, double* arg, int paramCount, bool& isCrash, std::string &errorBuffer);
+double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakable>& tweakable, bool& isCrash, std::string &errorBuffer);
 
 #include <setjmp.h>
 
@@ -40,7 +40,7 @@ void PicocParseInteractive(Picoc *pc);
 /* platform.c */
 void PicocCallMain(Picoc *pc, double arg);
 void PicocCallMain(Picoc *pc, double arg1, double arg2);
-void PicocInitialise(Picoc *pc, int StackSize);
+void PicocInitialise(Picoc *pc, int StackSize, std::vector<Tweakable>& tweakables);
 void PicocCleanup(Picoc *pc);
 void PicocPlatformScanFile(Picoc *pc, const char *SourceStr);
 
