@@ -381,8 +381,13 @@ void VariableDefinePlatformVar(Picoc *pc, struct ParseState *Parser, const char 
     SomeValue->Typ = Typ;
     SomeValue->Val = FromValue;
     
-    if (!TableSet(pc, (pc->TopStackFrame == NULL) ? &pc->GlobalTable : &pc->TopStackFrame->LocalTable, TableStrRegister(pc, Ident), SomeValue, Parser ? Parser->FileName : NULL, Parser ? Parser->Line : 0, Parser ? Parser->CharacterPos : 0))
-		ProgramFail(Parser, "'" + std::string(Ident) + "' is already defined");
+	if (!TableSet(pc, (pc->TopStackFrame == NULL) ? &pc->GlobalTable : &pc->TopStackFrame->LocalTable, TableStrRegister(pc, Ident), SomeValue, Parser ? Parser->FileName : NULL, Parser ? Parser->Line : 0, Parser ? Parser->CharacterPos : 0))
+	{
+		if (Parser)
+			ProgramFail(Parser, "'" + std::string(Ident) + "' is already defined");
+		else
+			ProgramFailNoParser(pc, "'" + std::string(Ident) + "' is already defined");
+	}
 }
 
 /* free and/or pop the top value off the stack. Var must be the top value on the stack! */
