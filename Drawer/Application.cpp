@@ -1,5 +1,6 @@
 ﻿#include "Application.h"
 #include "picoc.h"
+#include <iostream>
 
 void Application::init()
 {
@@ -115,7 +116,7 @@ int Application::main()
 		}
 
 		// Zoom in
-		if (mWindow.hasFocus() && (float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mGui.getSize().x)
+		if (mWindow.hasFocus() && (float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mWindow.getSize().x)
 		{
 			if (sf::Keyboard::isKeyPressed(sf::Keyboard::PageUp) && timer.getElapsedTime().asMilliseconds() > 10)
 			{
@@ -170,7 +171,7 @@ int Application::main()
 			{
 				if (isMouseOverDelimitator())
 					drag = DRAG_DELIMITATOR;
-				else if ((float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mGui.getSize().x)
+				else if ((float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mWindow.getSize().x)
 				{
 					if (isMouseOverXAxis())
 						drag = DRAG_X;
@@ -199,13 +200,13 @@ int Application::main()
 		mWindow.pushGLStates();
 
 		// delimitator
-		sf::RectangleShape delimitator(sf::Vector2f(5.f, mGui.getSize().y));
-		delimitator.setPosition(mGui.getSize().x * mDelimitatorRatio, 0);
+		sf::RectangleShape delimitator(sf::Vector2f(5.f, mWindow.getSize().y));
+		delimitator.setPosition(mWindow.getSize().x * mDelimitatorRatio, 0);
 		delimitator.setFillColor(sf::Color(128, 128, 128));
 		mWindow.draw(delimitator);
 
 		// Curve
-		mGraphScreen = sf::FloatRect(mGui.getSize().x * mDelimitatorRatio + 30.f, 100.f, mGui.getSize().x * (1.f - mDelimitatorRatio) - 100.f, mGui.getSize().y - 200.f);
+		mGraphScreen = sf::FloatRect(mWindow.getSize().x * mDelimitatorRatio + 30.f, 100.f, mWindow.getSize().x * (1.f - mDelimitatorRatio) - 100.f, mWindow.getSize().y - 200.f);
 
 		if (mShowFunctionList)
 		{
@@ -222,7 +223,7 @@ int Application::main()
 
 		// Display messages
 		mMutex.lock();
-		mErrorMessage.setPosition(30, mGui.getSize().y - 70);
+		mErrorMessage.setPosition(30, mWindow.getSize().y - 70);
 		mWindow.draw(mErrorMessage);
 		mMutex.unlock();
 
@@ -611,7 +612,7 @@ void Application::show3DGraph()
 	char buffer[256];
 	sprintf_s<256>(buffer, "Axis Z: %g to %g", minZ, maxZ);
 	sf::Text text(buffer, *mGui.getFont(), 14);
-	text.setPosition(mGui.getSize().x - 230, mGui.getSize().y - 60);
+	text.setPosition(mWindow.getSize().x - 230, mWindow.getSize().y - 60);
 	text.setColor(sf::Color::Blue);
 	mWindow.draw(text);
 
@@ -705,7 +706,7 @@ void Application::showBuiltInFunctions()
 	const char* str = list.c_str();
 
 	sf::Text text("", *mGui.getFont(), 12);
-	text.setPosition(mGui.getSize().x * mDelimitatorRatio + 30.f, 30.f);
+	text.setPosition(mWindow.getSize().x * mDelimitatorRatio + 30.f, 30.f);
 	text.setColor(sf::Color::White);
 
 	const char* strEnd = str + list.length();
@@ -720,7 +721,7 @@ void Application::showBuiltInFunctions()
 
 			sf::Vector2f pos = text.getPosition();
 			pos.y += 15.f;
-			if (pos.y > mGui.getSize().y - 50)
+			if (pos.y > mWindow.getSize().y - 50)
 			{
 				pos = sf::Vector2f(pos.x + 250.f, 30.f);
 			}
@@ -754,8 +755,7 @@ void Application::addTweakable(const std::string& tweakableName)
 	tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 25.f * mTweakables.size() + 15);
 	tweakableContainer->show();
 
-	auto theme = std::make_shared<tgui::Theme>();
-	tgui::Button::Ptr button = theme->load("Button");
+	tgui::Button::Ptr button = tgui::Button::create();
 	button->setSize(tgui::bindWidth(tweakableContainer) - 20, 20);
 	button->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 25.f * mTweakables.size() - 10);
 	button->setText(tweakableName);
@@ -770,9 +770,6 @@ void Application::addTweakable(const std::string& tweakableName)
 
 void Application::loadWidgets()
 {
-	// Load the black theme
-	auto theme = std::make_shared<tgui::Theme>();// "TGUI/widgets/Black.txt");
-
 	auto windowHeight = tgui::bindHeight(mGui);
 
 	mMainContainer = std::make_shared<tgui::VerticalLayout>();
@@ -780,7 +777,7 @@ void Application::loadWidgets()
 	mGui.add(mMainContainer, "Main");
 
 	// Create the source code edit box
-	mSourceCodeEditBox = theme->load("TextBox");
+	mSourceCodeEditBox = tgui::TextBox::create();
 	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200);
 	mSourceCodeEditBox->setPosition(10, 30);
 	mGui.add(mSourceCodeEditBox, "Code");
@@ -790,7 +787,7 @@ void Application::loadWidgets()
 	fillDefaultSourceCode();
 
 	// Create buttons
-	tgui::Button::Ptr functionButton = theme->load("Button");
+	tgui::Button::Ptr functionButton = tgui::Button::create();
 	functionButton->setSize(tgui::bindWidth(mMainContainer), 25);
 	functionButton->setPosition(10, windowHeight -150);
 	functionButton->setText("Show built-in functions");
@@ -799,7 +796,7 @@ void Application::loadWidgets()
 		mShowFunctionList = !mShowFunctionList;
 	});
 
-	tgui::Button::Ptr resetButton = theme->load("Button");
+	tgui::Button::Ptr resetButton = tgui::Button::create();
 	resetButton->setSize(tgui::bindWidth(mMainContainer), 25);
 	resetButton->setPosition(10, windowHeight - 120);
 	resetButton->setText("Reset interpreter");
@@ -809,7 +806,7 @@ void Application::loadWidgets()
 		gResetParser = true;
 	});
 
-	tgui::ComboBox::Ptr coordinateBox = theme->load("ComboBox");
+	tgui::ComboBox::Ptr coordinateBox = tgui::ComboBox::create();
 	coordinateBox->setSize(170, 20);
 	coordinateBox->setPosition(tgui::bindWidth(mMainContainer) + 60.f, 10.f);
 	coordinateBox->addItem("Cartesian coordinates");
@@ -828,7 +825,7 @@ void Application::loadWidgets()
 		mCoordinate = (enumCoordinate)box->getSelectedItemIndex();
 	}, coordinateBox);
 
-	tgui::ComboBox::Ptr highDefBox = theme->load("ComboBox");
+	tgui::ComboBox::Ptr highDefBox = tgui::ComboBox::create();
 	highDefBox->setSize(100, 20);
 	highDefBox->setPosition(tgui::bindWidth(mMainContainer) + 250.f, 10.f);
 	highDefBox->addItem("Low Def");
@@ -865,7 +862,7 @@ void Application::loadWidgets()
 		tweakableContainer->setPosition(tgui::bindWidth(mGui) - tgui::bindWidth(tweakableContainer) - 10.f, windowHeight - tgui::bindHeight(tweakableContainer) - 10.f);
 		mGui.add(tweakableContainer, "TweakableContainer");
 
-		tgui::Button::Ptr addTweakable = theme->load("Button");
+		tgui::Button::Ptr addTweakable = tgui::Button::create();
 		addTweakable->setSize(tgui::bindWidth(tweakableContainer) - 20, 25);
 		addTweakable->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 10);
 		addTweakable->setText("Add tweakable");
@@ -878,9 +875,10 @@ void Application::loadWidgets()
 		tweakableSettings->setSize(0.25f * tgui::bindWidth(mGui), 70.f);
 		tweakableSettings->setPosition(0.4f * tgui::bindWidth(mGui), windowHeight - 70.f);
 		tweakableSettings->hide();
+		tweakableSettings->getRenderer()->setBackgroundColor(sf::Color(180, 180, 180, 180));
 		mGui.add(tweakableSettings, "TweakableSettings");
 
-		tgui::Slider::Ptr tweakableSlider = theme->load("Slider");
+		tgui::Slider::Ptr tweakableSlider = tgui::Slider::create();
 		tweakableSlider->setPosition(10, 10);
 		tweakableSlider->setSize(tgui::bindWidth(tweakableSettings) - 20, 10);
 		tweakableSlider->setMaximum(1000);
@@ -899,7 +897,7 @@ void Application::loadWidgets()
 			}
 		});
 
-		tgui::EditBox::Ptr minEditBox = theme->load("EditBox");
+		tgui::EditBox::Ptr minEditBox = tgui::EditBox::create();
 		minEditBox->setSize(50, 20);
 		minEditBox->setPosition(10, 35);
 		tweakableSettings->add(minEditBox);
@@ -909,7 +907,7 @@ void Application::loadWidgets()
 		//maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
 		//tweakableSettings->add(maxEditBox);
 
-		tgui::EditBox::Ptr maxEditBox = theme->load("EditBox");
+		tgui::EditBox::Ptr maxEditBox = tgui::EditBox::create();
 		maxEditBox->setSize(50, 20);
 		maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
 		tweakableSettings->add(maxEditBox);
@@ -917,26 +915,27 @@ void Application::loadWidgets()
 
 	//Confirmation window
 	{
-		mAddTweakableBox = theme->load("Panel");
+		mAddTweakableBox = tgui::Panel::create();
 		mAddTweakableBox->setSize(400, 200);
 		mAddTweakableBox->setPosition(0.5f * tgui::bindSize(mGui) - sf::Vector2f(200.f, 100.f));
+		mAddTweakableBox->getRenderer()->setBackgroundColor(sf::Color(180,180,180,180));
 		mAddTweakableBox->hide();
 		mGui.add(mAddTweakableBox);
 
-		tgui::EditBox::Ptr editBox = theme->load("EditBox");
+		tgui::EditBox::Ptr editBox = tgui::EditBox::create();
 		editBox->setSize(200, 25);
 		editBox->setPosition(100, 80);
 		mAddTweakableBox->add(editBox, "EditBox");
 		editBox->connect("ReturnKeyPressed", &Application::callbackAddTweakable, this, editBox);
 
-		tgui::Button::Ptr OKButton = theme->load("Button");
+		tgui::Button::Ptr OKButton = tgui::Button::create();
 		OKButton->setSize(50, 25);
 		OKButton->setPosition(50, 150);
 		OKButton->setText("OK");
 		mAddTweakableBox->add(OKButton);
 		OKButton->connect("pressed", &Application::callbackAddTweakable, this, editBox);
 
-		tgui::Button::Ptr CancelButton = theme->load("Button");
+		tgui::Button::Ptr CancelButton = tgui::Button::create();
 		CancelButton->setSize(50, 25);
 		CancelButton->setPosition(300, 150);
 		CancelButton->setText("Cancel");
