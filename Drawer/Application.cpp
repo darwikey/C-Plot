@@ -967,9 +967,10 @@ void Application::loadWidgets()
 		mGui.add(tweakableContainer, "TweakableContainer");
 
 		tgui::Button::Ptr addTweakable = tgui::Button::create();
-		addTweakable->setSize(tgui::bindWidth(tweakableContainer) - 20, 25);
-		addTweakable->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 10);
+		addTweakable->setSize(tgui::bindWidth(tweakableContainer) - 14, 20);
+		addTweakable->setPosition(tgui::bindLeft(tweakableContainer) + 7, tgui::bindBottom(tweakableContainer) - 13);
 		addTweakable->setText("Add tweakable");
+		addTweakable->setTextSize(10);
 		mGui.add(addTweakable);
 		addTweakable->connect("pressed", [this]() {
 			mAddTweakableBox->show();

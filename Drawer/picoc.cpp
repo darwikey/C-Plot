@@ -20,7 +20,6 @@ double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakab
 	isCrash = false;
 	gResetParser = false;
 
-    int StackSize = getenv("STACKSIZE") ? atoi(getenv("STACKSIZE")) : PICOC_STACK_SIZE;
     Picoc pc;
 	memset(&pc, '\0', sizeof(pc));
     
@@ -32,26 +31,14 @@ double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakab
 		return pc.PicocExitValue;
 	}
 
-    PicocInitialise(&pc, StackSize, tweakables);
-    
+    PicocInitialise(&pc, PICOC_STACK_SIZE, tweakables);
         
-    //if (0)//argc > ParamCount && strcmp(argv[ParamCount], "-i") == 0)
-    //{
-    //    PicocIncludeAllSystemHeaders(&pc);
-    //    PicocParseInteractive(&pc);
-    //}
-    //else
-    {
-            
-        //for (; ParamCount < argc && strcmp(argv[ParamCount], "-") != 0; ParamCount++)
-        PicocPlatformScanFile(&pc, fCode);
+    PicocPlatformScanFile(&pc, fCode);
         
-		if (paramCount == 1)
-			PicocCallMain(&pc, arg[0]);// argc - ParamCount, &argv[ParamCount]);
-		else if (paramCount == 2)
-			PicocCallMain(&pc, arg[0], arg[1]);
-
-    }
+	if (paramCount == 1)
+		PicocCallMain(&pc, arg[0]);
+	else if (paramCount == 2)
+		PicocCallMain(&pc, arg[0], arg[1]);
     
     PicocCleanup(&pc);
     return pc.PicocExitValue;
