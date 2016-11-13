@@ -21,7 +21,7 @@ void PicocInitialise(Picoc *pc, int StackSize, std::vector<Tweakable>& tweakable
     LibraryInit(pc);
 	for (Tweakable& it : tweakables)
 	{
-		VariableDefinePlatformVar(pc, NULL, it.mName.c_str(), &pc->FPType, (union AnyValue *)&it.value, FALSE);
+		VariableDefinePlatformVar(pc, NULL, it.name.c_str(), &pc->FPType, (union AnyValue *)&it.value, FALSE);
 	}
 #ifdef BUILTIN_MINI_STDLIB
     LibraryAdd(pc, &GlobalTable, "c library", &CLibrary[0]);

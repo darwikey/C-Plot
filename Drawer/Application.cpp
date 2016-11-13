@@ -739,16 +739,22 @@ void Application::callbackAddTweakable(tgui::EditBox::Ptr editBox)
 		// to upper case
 		std::transform(text.begin(), text.end(), text.begin(), ::toupper);
 		// prevent duplicate
-		for (Tweakable& it : mTweakables)
+		for (const Tweakable& it : mTweakables)
 		{
-			if (it.mName == text)
+			if (it.name == text)
 			{
 				editBox->getRenderer()->setBorderColor(sf::Color::Red);
 				return;
 			}
 		}
 
-		addTweakable(text);
+		mMutex.lock();
+		mTweakables.push_back(Tweakable(text));
+		mSourceCodeEditBox->setText(mSourceCode);
+		mMutex.unlock();
+		
+		callbackTextEdit();
+		updateTweakable(true);
 		editBox->setText("");
 		editBox->getRenderer()->setBorderColor(sf::Color::Black);
 		mAddTweakableBox->hide();
@@ -759,35 +765,85 @@ void Application::callbackAddTweakable(tgui::EditBox::Ptr editBox)
 	}
 }
 
-void Application::addTweakable(const std::string& tweakableName)
+void Application::addTweakableButtons(size_t index, const std::string& tweakableName)
 {
-	mMutex.lock();
-	mTweakables.push_back(Tweakable(tweakableName));
-	mSourceCodeEditBox->setText(mSourceCode);
-	mMutex.unlock();
-	callbackTextEdit();
-	tgui::Widget::Ptr tweakableContainer = mGui.get("TweakableContainer");
-	tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 25.f * mTweakables.size() + 15);
-	tweakableContainer->show();
-
+	tgui::Panel::Ptr tweakableContainer = std::dynamic_pointer_cast<tgui::Panel>(mGui.get("TweakableContainer"));
 	tgui::Button::Ptr button = tgui::Button::create();
-	button->setSize(tgui::bindWidth(tweakableContainer) - 20, 20);
-	button->setPosition(tgui::bindLeft(tweakableContainer) + 10, tgui::bindBottom(tweakableContainer) - 25.f * mTweakables.size() - 10);
+	button->setSize(tgui::bindWidth(tweakableContainer) - 50, 20);
+	button->setPosition(5, 25.f * index + 5.f);
 	button->setText(tweakableName);
-	mGui.add(button, tweakableName);
+	tweakableContainer->add(button, tweakableName);
 	button->connect("pressed", [this, tweakableName] {
 		showTweakableSettings(tweakableName);
 	});
 
+	tgui::Button::Ptr deleteButton = tgui::Button::create();
+	deleteButton->setSize(30, 20);
+	deleteButton->setPosition(tgui::bindRight(button) + 10, tgui::bindTop(button));
+	deleteButton->setText("Del");
+	tweakableContainer->add(deleteButton);
+	deleteButton->connect("pressed", [this, button, deleteButton, tweakableName] {
+		for (auto it = mTweakables.begin(); it != mTweakables.end(); ++it)
+		{
+			if (it->name == tweakableName)
+			{
+				mTweakables.erase(it);
+				break;
+			}
+		}
+		updateTweakable(true);
+	});
+}
+
+void Application::updateTweakable(bool rebuildUI)
+{
+	tgui::Panel::Ptr tweakableContainer = std::dynamic_pointer_cast<tgui::Panel>(mGui.get("TweakableContainer"));
+
+	if (mTweakables.empty())
+	{
+		if (rebuildUI)
+		{
+			mTweakableEditBox->setSize(mTweakableEditBox->getSizeLayout().x, 0.f);
+			mTweakableEditBox->hide();
+			tweakableContainer->hide();
+		}
+	}
+	else
+	{
+		if (rebuildUI)
+		{
+			tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 25.f * mTweakables.size() + 15);
+			tweakableContainer->removeAllWidgets();
+			for (size_t i = 0; i < mTweakables.size(); i++)
+			{
+				addTweakableButtons(i, mTweakables[i].name);
+			}
+			tweakableContainer->show();
+		}
+
+		std::string text;
+		for (const Tweakable& it : mTweakables)
+		{
+			text.append("double ");
+			text.append(it.name);
+			text.append(" = ");
+			text.append(std::to_string(it.value));
+			text.append(";\n");
+		}
+		text.resize(std::max((int)text.size() - 1, 0));// remove last \n
+		mTweakableEditBox->show();
+		mTweakableEditBox->setSize(mTweakableEditBox->getSizeLayout().x, 20.f * std::min<int>(mTweakables.size(), 3) + 7.f);
+		mTweakableEditBox->setText(text);
+	}
 }
 
 void Application::showTweakableSettings(const std::string& currentTweakable)
 {
 	mCurrentTweakable = currentTweakable;
 
-	for (Tweakable& it : mTweakables)
+	for (const Tweakable& it : mTweakables)
 	{
-		if (it.mName == mCurrentTweakable)
+		if (it.name == mCurrentTweakable)
 		{
 			auto tweakableSettings = std::dynamic_pointer_cast<tgui::Panel>(mGui.get("TweakableSettings"));
 			tweakableSettings->show();
@@ -815,10 +871,17 @@ void Application::loadWidgets()
 	mMainContainer->setSize(mDelimitatorRatio * tgui::bindWidth(mGui) - 20, windowHeight);
 	mGui.add(mMainContainer, "Main");
 
+	mTweakableEditBox = tgui::TextBox::create();
+	mTweakableEditBox->setSize(tgui::bindWidth(mMainContainer), 0);
+	mTweakableEditBox->setPosition(10, 30);
+	mTweakableEditBox->setReadOnly(true);
+	mTweakableEditBox->hide();
+	mGui.add(mTweakableEditBox);
+
 	// Create the source code edit box
 	mSourceCodeEditBox = tgui::TextBox::create();
-	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200);
-	mSourceCodeEditBox->setPosition(10, 30);
+	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200 - tgui::bindHeight(mTweakableEditBox));
+	mSourceCodeEditBox->setPosition(10, tgui::bindBottom(mTweakableEditBox) + 10);
 	mGui.add(mSourceCodeEditBox, "Code");
 	mSourceCodeEditBox->connect("TextChanged", &Application::callbackTextEdit, this);
 	
@@ -828,7 +891,7 @@ void Application::loadWidgets()
 	// Create buttons
 	tgui::Button::Ptr functionButton = tgui::Button::create();
 	functionButton->setSize(tgui::bindWidth(mMainContainer), 25);
-	functionButton->setPosition(10, windowHeight -150);
+	functionButton->setPosition(10, tgui::bindBottom(mSourceCodeEditBox) + 10);
 	functionButton->setText("Show built-in functions");
 	mGui.add(functionButton);
 	functionButton->connect("pressed", [this] {
@@ -837,7 +900,7 @@ void Application::loadWidgets()
 
 	tgui::Button::Ptr resetButton = tgui::Button::create();
 	resetButton->setSize(tgui::bindWidth(mMainContainer), 25);
-	resetButton->setPosition(10, windowHeight - 120);
+	resetButton->setPosition(10, tgui::bindBottom(functionButton) + 10);
 	resetButton->setText("Reset interpreter");
 	mGui.add(resetButton);
 	resetButton->connect("pressed", [this] {
@@ -846,7 +909,7 @@ void Application::loadWidgets()
 	});
 
 	tgui::ComboBox::Ptr coordinateBox = tgui::ComboBox::create();
-	coordinateBox->setSize(170, 20);
+	coordinateBox->setSize(180, 25);
 	coordinateBox->setPosition(tgui::bindWidth(mMainContainer) + 60.f, 10.f);
 	coordinateBox->addItem("Cartesian coordinates");
 	coordinateBox->addItem("Polar coordinates");
@@ -865,8 +928,8 @@ void Application::loadWidgets()
 	}, coordinateBox);
 
 	tgui::ComboBox::Ptr highDefBox = tgui::ComboBox::create();
-	highDefBox->setSize(100, 20);
-	highDefBox->setPosition(tgui::bindWidth(mMainContainer) + 250.f, 10.f);
+	highDefBox->setSize(120, 25);
+	highDefBox->setPosition(tgui::bindRight(coordinateBox) + 20.f, tgui::bindTop(coordinateBox));
 	highDefBox->addItem("Low Def");
 	highDefBox->addItem("Medium Def");
 	highDefBox->addItem("High Def");
@@ -899,6 +962,8 @@ void Application::loadWidgets()
 		tgui::Panel::Ptr tweakableContainer = std::make_shared<tgui::Panel>();
 		tweakableContainer->setSize(0.1f * tgui::bindWidth(mGui), 10.f);
 		tweakableContainer->setPosition(tgui::bindWidth(mGui) - tgui::bindWidth(tweakableContainer) - 10.f, windowHeight - tgui::bindHeight(tweakableContainer) - 10.f);
+		tweakableContainer->getRenderer()->setBackgroundColor(sf::Color(180,180,180,180));
+		tweakableContainer->hide();
 		mGui.add(tweakableContainer, "TweakableContainer");
 
 		tgui::Button::Ptr addTweakable = tgui::Button::create();
@@ -926,11 +991,12 @@ void Application::loadWidgets()
 		tweakableSlider->connect("ValueChanged", [this, tweakableSlider]() {
 			for (Tweakable& it : mTweakables)
 			{
-				if (it.mName == mCurrentTweakable)
+				if (it.name == mCurrentTweakable)
 				{
 					sf::Lock lock(mMutex);
 					it.value = (double)tweakableSlider->getValue() / tweakableSlider->getMaximum();
 					it.value = it.value * (it.max - it.min) + it.min;
+					updateTweakable(false);
 					mSourceDirty = true;
 					return;
 				}
@@ -950,7 +1016,7 @@ void Application::loadWidgets()
 		minEditBox->connect("TextChanged", [this, minEditBox]() {
 			for (Tweakable& it : mTweakables)
 			{
-				if (it.mName == mCurrentTweakable)
+				if (it.name == mCurrentTweakable)
 				{
 					it.min = atof(minEditBox->getText().toAnsiString().c_str());
 					return;
@@ -971,7 +1037,7 @@ void Application::loadWidgets()
 		maxEditBox->connect("TextChanged", [this, maxEditBox]() {
 			for (Tweakable& it : mTweakables)
 			{
-				if (it.mName == mCurrentTweakable)
+				if (it.name == mCurrentTweakable)
 				{
 					it.max = atof(maxEditBox->getText().toAnsiString().c_str());
 					return;

@@ -8,7 +8,7 @@ struct Tweakable
 	~Tweakable();
 
 
-	std::string mName;
+	std::string name;
 	double value = 0;
 	double min = -10.0;
 	double max = 10.0;

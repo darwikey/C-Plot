@@ -42,7 +42,8 @@ private:
 	void               fillDefaultSourceCode();
 	void               showBuiltInFunctions();
 	void               callbackAddTweakable(tgui::EditBox::Ptr editbox);
-	void               addTweakable(const std::string& tweakableName);
+	void               addTweakableButtons(size_t index, const std::string& tweakableName);
+	void               updateTweakable(bool rebuildUI);
 	void               showTweakableSettings(const std::string& currentTweakable);
 	void               loadWidgets();
 	sf::Vector2f       convertGraphCoordToScreen(const sf::Vector2f& point) const;
@@ -58,6 +59,7 @@ private:
 	sf::RenderWindow          mWindow;
 	tgui::Gui                 mGui;
 	tgui::VerticalLayout::Ptr mMainContainer;
+	tgui::TextBox::Ptr        mTweakableEditBox;
 	tgui::TextBox::Ptr        mSourceCodeEditBox;
 	tgui::Panel::Ptr          mAddTweakableBox;
 	std::thread*              mThread = nullptr;
