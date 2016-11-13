@@ -200,7 +200,7 @@ int Application::main()
 		mWindow.pushGLStates();
 
 		// delimitator
-		sf::RectangleShape delimitator(sf::Vector2f(5.f, mWindow.getSize().y));
+		sf::RectangleShape delimitator(sf::Vector2f(5.f, (float)mWindow.getSize().y));
 		delimitator.setPosition(mWindow.getSize().x * mDelimitatorRatio, 0);
 		delimitator.setFillColor(sf::Color(128, 128, 128));
 		mWindow.draw(delimitator);
@@ -612,7 +612,7 @@ void Application::show3DGraph()
 	char buffer[256];
 	sprintf_s<256>(buffer, "Axis Z: %g to %g", minZ, maxZ);
 	sf::Text text(buffer, *mGui.getFont(), 14);
-	text.setPosition(mWindow.getSize().x - 230, mWindow.getSize().y - 60);
+	text.setPosition(mWindow.getSize().x - 230.f, mWindow.getSize().y - 60.f);
 	text.setColor(sf::Color::Blue);
 	mWindow.draw(text);
 
@@ -734,13 +734,28 @@ void Application::showBuiltInFunctions()
 void Application::callbackAddTweakable(tgui::EditBox::Ptr editBox)
 {
 	std::string text = editBox->getText();
-	if (!text.empty())
+	if (!text.empty() && isalpha(text[0]))
 	{
 		// to upper case
 		std::transform(text.begin(), text.end(), text.begin(), ::toupper);
+		// prevent duplicate
+		for (Tweakable& it : mTweakables)
+		{
+			if (it.mName == text)
+			{
+				editBox->getRenderer()->setBorderColor(sf::Color::Red);
+				return;
+			}
+		}
+
 		addTweakable(text);
 		editBox->setText("");
+		editBox->getRenderer()->setBorderColor(sf::Color::Black);
 		mAddTweakableBox->hide();
+	}
+	else
+	{
+		editBox->getRenderer()->setBorderColor(sf::Color::Red);
 	}
 }
 
