@@ -223,7 +223,7 @@ int Application::main()
 
 		// Display messages
 		mMutex.lock();
-		mErrorMessage.setPosition(30, mWindow.getSize().y - 70);
+		mErrorMessage.setPosition(30.f, mWindow.getSize().y - 70.f);
 		mWindow.draw(mErrorMessage);
 		mMutex.unlock();
 
@@ -761,11 +761,35 @@ void Application::addTweakable(const std::string& tweakableName)
 	button->setText(tweakableName);
 	mGui.add(button, tweakableName);
 	button->connect("pressed", [this, tweakableName] {
-		auto tweakableSettings = mGui.get("TweakableSettings");
-		tweakableSettings->show();
-		mCurrentTweakable = tweakableName;
+		showTweakableSettings(tweakableName);
 	});
 
+}
+
+void Application::showTweakableSettings(const std::string& currentTweakable)
+{
+	mCurrentTweakable = currentTweakable;
+
+	for (Tweakable& it : mTweakables)
+	{
+		if (it.mName == mCurrentTweakable)
+		{
+			auto tweakableSettings = std::dynamic_pointer_cast<tgui::Panel>(mGui.get("TweakableSettings"));
+			tweakableSettings->show();
+
+			//slider
+			auto slider = std::dynamic_pointer_cast<tgui::Slider>(tweakableSettings->get("Slider"));		
+			double i = (it.value - it.min) / (it.max - it.min);
+			slider->setValue((int)(i * slider->getMaximum()));
+
+			// min / max
+			auto minBox = std::dynamic_pointer_cast<tgui::EditBox>(tweakableSettings->get("Min"));
+			minBox->setText(std::to_string(it.min));
+			auto maxBox = std::dynamic_pointer_cast<tgui::EditBox>(tweakableSettings->get("Max"));
+			maxBox->setText(std::to_string(it.max));
+			return;
+		}
+	}
 }
 
 void Application::loadWidgets()
@@ -869,6 +893,7 @@ void Application::loadWidgets()
 		mGui.add(addTweakable);
 		addTweakable->connect("pressed", [this]() {
 			mAddTweakableBox->show();
+			mAddTweakableBox->get("EditBox")->focus();
 		});
 
 		tgui::Panel::Ptr tweakableSettings = std::make_shared<tgui::Panel>();
@@ -882,7 +907,7 @@ void Application::loadWidgets()
 		tweakableSlider->setPosition(10, 10);
 		tweakableSlider->setSize(tgui::bindWidth(tweakableSettings) - 20, 10);
 		tweakableSlider->setMaximum(1000);
-		tweakableSettings->add(tweakableSlider);
+		tweakableSettings->add(tweakableSlider, "Slider");
 		tweakableSlider->connect("ValueChanged", [this, tweakableSlider]() {
 			for (Tweakable& it : mTweakables)
 			{
@@ -897,20 +922,47 @@ void Application::loadWidgets()
 			}
 		});
 
+		tgui::Label::Ptr minText = tgui::Label::create();
+		minText->setSize(50, 20);
+		minText->setPosition(10, 35);
+		minText->setText("Min:");
+		tweakableSettings->add(minText);
+
 		tgui::EditBox::Ptr minEditBox = tgui::EditBox::create();
 		minEditBox->setSize(50, 20);
-		minEditBox->setPosition(10, 35);
-		tweakableSettings->add(minEditBox);
+		minEditBox->setPosition(tgui::bindPosition(minText) + sf::Vector2f(40.f, 0.f));
+		tweakableSettings->add(minEditBox, "Min");
+		minEditBox->connect("TextChanged", [this, minEditBox]() {
+			for (Tweakable& it : mTweakables)
+			{
+				if (it.mName == mCurrentTweakable)
+				{
+					it.min = atof(minEditBox->getText().toAnsiString().c_str());
+					return;
+				}
+			}
+		});
 
-		//tgui::Text::Ptr maxEditBox = theme->load("Text");
-		//maxEditBox->setSize(50, 20);
-		//maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
-		//tweakableSettings->add(maxEditBox);
+		tgui::Label::Ptr maxText = tgui::Label::create();
+		maxText->setSize(50, 20);
+		maxText->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
+		maxText->setText("Max:");
+		tweakableSettings->add(maxText);
 
 		tgui::EditBox::Ptr maxEditBox = tgui::EditBox::create();
 		maxEditBox->setSize(50, 20);
-		maxEditBox->setPosition(tgui::bindPosition(minEditBox) + sf::Vector2f(70.f, 0.f));
-		tweakableSettings->add(maxEditBox);
+		maxEditBox->setPosition(tgui::bindPosition(maxText) + sf::Vector2f(40.f, 0.f));
+		tweakableSettings->add(maxEditBox, "Max");
+		maxEditBox->connect("TextChanged", [this, maxEditBox]() {
+			for (Tweakable& it : mTweakables)
+			{
+				if (it.mName == mCurrentTweakable)
+				{
+					it.max = atof(maxEditBox->getText().toAnsiString().c_str());
+					return;
+				}
+			}
+		});
 	}
 
 	//Confirmation window
@@ -921,6 +973,11 @@ void Application::loadWidgets()
 		mAddTweakableBox->getRenderer()->setBackgroundColor(sf::Color(180,180,180,180));
 		mAddTweakableBox->hide();
 		mGui.add(mAddTweakableBox);
+
+		tgui::Label::Ptr text = tgui::Label::create();
+		text->setPosition(100, 40);
+		text->setText("Tweakable name:");
+		mAddTweakableBox->add(text);
 
 		tgui::EditBox::Ptr editBox = tgui::EditBox::create();
 		editBox->setSize(200, 25);
@@ -940,7 +997,8 @@ void Application::loadWidgets()
 		CancelButton->setPosition(300, 150);
 		CancelButton->setText("Cancel");
 		mAddTweakableBox->add(CancelButton);
-		CancelButton->connect("pressed", [this]{
+		CancelButton->connect("pressed", [this, editBox]{
+			editBox->setText("");
 			mAddTweakableBox->hide();
 		});
 	}

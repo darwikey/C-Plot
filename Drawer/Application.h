@@ -43,6 +43,7 @@ private:
 	void               showBuiltInFunctions();
 	void               callbackAddTweakable(tgui::EditBox::Ptr editbox);
 	void               addTweakable(const std::string& tweakableName);
+	void               showTweakableSettings(const std::string& currentTweakable);
 	void               loadWidgets();
 	sf::Vector2f       convertGraphCoordToScreen(const sf::Vector2f& point) const;
 	sf::Vector2f       convertScreenCoordToGraph(const sf::Vector2f& point) const;
