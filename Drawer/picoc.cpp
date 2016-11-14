@@ -11,36 +11,28 @@
 #include <stdio.h>
 #include <string.h>
 
-#define PICOC_STACK_SIZE (128*1024)              /* space for the the stack */
-
 extern bool gResetParser;
 
-double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakable>& tweakables, bool& isCrash, std::string &errorBuffer)
-{
-	isCrash = false;
-	gResetParser = false;
+#define CALL_MAIN_WITH_ARGS_RETURN_DOUBLE "__exit_value = main(__arg);"
+#define CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE "__exit_value = main(__arg1, __arg2);"
 
-    Picoc pc;
-	memset(&pc, '\0', sizeof(pc));
+double PicocEvaluate(Picoc& pc, int paramCount, std::string &errorBuffer)
+{
+	gResetParser = false;
     
 	if (PicocPlatformSetExitPoint(&pc))
 	{
-		isCrash = true;
 		errorBuffer = pc.ErrorBuffer;
-		PicocCleanup(&pc);
+		if (errorBuffer.empty())
+			errorBuffer = "unknown error";
 		return pc.PicocExitValue;
 	}
-
-    PicocInitialise(&pc, PICOC_STACK_SIZE, tweakables);
-        
-    PicocPlatformScanFile(&pc, fCode);
-        
-	if (paramCount == 1)
-		PicocCallMain(&pc, arg[0]);
-	else if (paramCount == 2)
-		PicocCallMain(&pc, arg[0], arg[1]);
     
-    PicocCleanup(&pc);
+	if (paramCount == 1)
+		PicocParse(&pc, "startup", CALL_MAIN_WITH_ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_ARGS_RETURN_DOUBLE), TRUE, TRUE, TRUE);
+	else if (paramCount == 2)
+		PicocParse(&pc, "startup", CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE), TRUE, TRUE, TRUE);
+    
     return pc.PicocExitValue;
 }
 

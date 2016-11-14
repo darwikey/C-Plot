@@ -308,12 +308,15 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	int numPoint = mNumPoint2D;
 	std::vector<Tweakable> tweakables = mTweakables;
 	mMutex.unlock();
-	bool isCrash = false;
+
+	Picoc pc;
 	std::string errorBuffer;
+	double x;
+	PicocInitialise(&pc, &x, 1, buffer, tweakables, errorBuffer);
 
 	for (int i = 0; i < numPoint; i++)
 	{
-		double x = (double)i / numPoint;
+		x = (double)i / numPoint;
 		mProgression = (float)x;
 		if (coordinate == CARTESIAN)
 		{
@@ -324,20 +327,18 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 			x *= 6.283185307179586;
 		}
 
-		float y = (float)parse(buffer.c_str(), &x, 1, tweakables, isCrash, errorBuffer);
-		if (isCrash)
+		float y = (float)PicocEvaluate(pc, 1, errorBuffer);
+		if (!errorBuffer.empty())
 		{
 			break;
 		}
 
 		result.push_back(sf::Vector2f((float)x, y));
 	}
-	if (isCrash)
-		mErrorMessage.setString(errorBuffer);
-	else
-		mErrorMessage.setString(sf::String());
+	PicocCleanup(&pc);
+	mErrorMessage.setString(errorBuffer);
 
-	return isCrash;
+	return !errorBuffer.empty();
 }
 
 bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
@@ -349,23 +350,25 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 	curveWidth = mNumPoint3D;
 	std::vector<Tweakable> tweakables = mTweakables;
 	mMutex.unlock();
-	bool isCrash = false;
+	
+	Picoc pc;
 	std::string errorBuffer;
-
 	double point[2];
+	PicocInitialise(&pc, point, 2, buffer, tweakables, errorBuffer);
+
 	for (int i = 0; i < curveWidth; i++)
 	{
 		double posX = (double)i / curveWidth;
 		mProgression = (float)posX;
-		point[0] = posX * width + start;
 
 		for (int j = 0; j < curveWidth; j++)
 		{
+			point[0] = posX * width + start;
 			double posY = (double)j / curveWidth;
 			point[1] = posY * width + start;
 
-			float z = (float)parse(buffer.c_str(), point, 2, tweakables, isCrash, errorBuffer);
-			if (isCrash)
+			float z = (float)PicocEvaluate(pc, 2, errorBuffer);
+			if (!errorBuffer.empty())
 			{
 				break;
 			}
@@ -373,17 +376,15 @@ bool Application::evaluate3D(std::vector<sf::Vector3f>& result, int& curveWidth)
 			result.push_back(sf::Vector3f((float)(posX-0.5f), (float)(posY-0.5f), z));
 		}
 
-		if (isCrash)
+		if (!errorBuffer.empty())
 		{
 			break;
 		}
 	}
-	if (isCrash)
-		mErrorMessage.setString(errorBuffer);
-	else
-		mErrorMessage.setString(sf::String());
+	PicocCleanup(&pc);
+	mErrorMessage.setString(errorBuffer);
 	
-	return isCrash;
+	return !errorBuffer.empty();
 }
 
 void Application::ApplyZoomOnGraph(float factor)

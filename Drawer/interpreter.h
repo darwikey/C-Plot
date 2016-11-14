@@ -369,6 +369,7 @@ struct IncludeLibrary
 /* the entire state of the picoc system */
 struct Picoc_Struct
 {
+	Picoc_Struct() { memset(this, '\0', sizeof(Picoc_Struct)); };
     /* parser global data */
     struct Table GlobalTable;
     struct CleanupTokenNode *CleanupTokenList;
@@ -499,9 +500,6 @@ void LexInteractiveCompleted(Picoc *pc, struct ParseState *Parser);
 void LexInteractiveStatementPrompt(Picoc *pc);
 
 /* parse.c */
-/* the following are defined in picoc.h:
- * void PicocParse(const char *FileName, const char *Source, int SourceLen, int RunIt, int CleanupNow, int CleanupSource);
- * void PicocParseInteractive(); */
 void PicocParseInteractiveNoStartPrompt(Picoc *pc, int EnableDebugger);
 enum ParseResult ParseStatement(struct ParseState *Parser, int CheckTrailingSemicolon);
 struct Value *ParseFunctionDefinition(struct ParseState *Parser, struct ValueType *ReturnType, char *Identifier);
@@ -585,13 +583,6 @@ void PrintType(struct ValueType *Typ, Picoc* pc);
 void LibPrintf(struct ParseState *Parser, struct Value *ReturnValue, struct Value **Param, int NumArgs);
 
 /* platform.c */
-/* the following are defined in picoc.h:
- * void PicocCallMain(int argc, char **argv);
- * int PicocPlatformSetExitPoint();
- * void PicocInitialise(int StackSize);
- * void PicocCleanup();
- * void PicocPlatformScanFile(const char *FileName);
- * extern int PicocExitValue; */
 void ProgramFail(struct ParseState *Parser, const std::string &Message);
 void ProgramFailNoParser(Picoc *pc, const std::string &Message);
 void AssignFail(struct ParseState *Parser, const std::string &message, struct ValueType *Type1, struct ValueType *Type2, const char *FuncName, int ParamNo);

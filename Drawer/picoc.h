@@ -18,29 +18,19 @@
 
 #include "interpreter.h"
 
-double parse(const char* fCode, double* arg, int paramCount, std::vector<Tweakable>& tweakable, bool& isCrash, std::string &errorBuffer);
+double PicocEvaluate(Picoc& pc, int paramCount, std::string &errorBuffer);
 
 #include <setjmp.h>
 
 /* this has to be a macro, otherwise errors will occur due to the stack being corrupt */
 #define PicocPlatformSetExitPoint(pc) setjmp((pc)->PicocExitBuf)
 
-
-#ifdef SURVEYOR_HOST
-/* mark where to end the program for platforms which require this */
-extern int PicocExitBuf[];
-
-#define PicocPlatformSetExitPoint(pc) setjmp((pc)->PicocExitBuf)
-#endif
-
 /* parse.c */
-void PicocParse(Picoc *pc, const char *FileName, const char *Source, int SourceLen, int RunIt, int CleanupNow, int CleanupSource, int EnableDebugger);
+void PicocParse(Picoc *pc, const char *FileName, const char *Source, int SourceLen, int RunIt, int CleanupNow, int EnableDebugger);
 void PicocParseInteractive(Picoc *pc);
 
 /* platform.c */
-void PicocCallMain(Picoc *pc, double arg);
-void PicocCallMain(Picoc *pc, double arg1, double arg2);
-void PicocInitialise(Picoc *pc, int StackSize, std::vector<Tweakable>& tweakables);
+void PicocInitialise(Picoc *pc, double* arg, int paramCount, const std::string &SourceCode, std::vector<Tweakable>& tweakables, std::string &errorBuffer);
 void PicocCleanup(Picoc *pc);
 void PicocPlatformScanFile(Picoc *pc, const char *SourceStr);
 
