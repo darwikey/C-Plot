@@ -21,7 +21,8 @@ enum enumDragMode
 	DRAG_X,
 	DRAG_Y,
 	DRAG_XY,
-	DRAG_DELIMITATOR
+	DRAG_DELIMITATOR,
+	DRAG_POINT
 };
 
 class Application
@@ -82,4 +83,5 @@ private:
 	enumCoordinate            mCoordinate = CARTESIAN;
 	std::vector<Tweakable>    mTweakables;
 	std::string               mCurrentTweakable;
+	std::vector<sf::Vector2f> mPoints;
 };

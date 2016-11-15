@@ -53,8 +53,9 @@ int Application::main()
 	sf::Clock timer;
 	enumDragMode drag = NO_DRAG;
 	sf::Vector2f dragPosition;
-	sf::Vector2i dragMousePosition;
+	sf::Vector2f dragMousePosition;
 	sf::FloatRect dragGraphRect = mGraphRect;
+	size_t dragPointIndex = 0;
 
 	while (mWindow.isOpen())
 	{
@@ -135,43 +136,74 @@ int Application::main()
 			}
 		}
 		// mouse
-		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && mWindow.hasFocus() && (float)sf::Mouse::getPosition(mWindow).y < mWindow.getSize().y - 100.f)
+		sf::Vector2f mousePosition((float)sf::Mouse::getPosition(mWindow).x, (float)sf::Mouse::getPosition(mWindow).y);
+		if (sf::Mouse::isButtonPressed(sf::Mouse::Left) && mWindow.hasFocus() && mousePosition.y < mWindow.getSize().y - 100.f)
 		{
 			if (drag != NO_DRAG)
 			{
 				sf::Lock lock(mMutex);
-				sf::Vector2i delta = sf::Mouse::getPosition() - dragMousePosition;
+				sf::Vector2f delta = mousePosition - dragMousePosition;
 				const float sensibility = 0.001f;
-				if (drag == DRAG_XY)
+				switch (drag)
 				{
+				case DRAG_XY:
 					mGraphRect.left = dragPosition.x - delta.x * sensibility * mGraphRect.width;
 					mGraphRect.top = dragPosition.y + delta.y * sensibility * mGraphRect.height;
-				}
-				else if (drag == DRAG_X)
+					break;
+
+				case DRAG_X:
 				{
 					float center = dragGraphRect.left + 0.5f * dragGraphRect.width;
 					mGraphRect.width = dragGraphRect.width * pow(2.f, delta.x * 0.01f);
 					mGraphRect.left = center - 0.5f * mGraphRect.width;
 				}
-				else if (drag == DRAG_Y)
+				break;
+
+				case DRAG_Y:
 				{
 					float center = dragGraphRect.top + 0.5f * dragGraphRect.height;
 					mGraphRect.height = dragGraphRect.height * pow(2.f, delta.y * 0.01f);
 					mGraphRect.top = center - 0.5f * mGraphRect.height;
 				}
-				else if (drag == DRAG_DELIMITATOR)
-				{
-					mDelimitatorRatio = (float)sf::Mouse::getPosition(mWindow).x / mWindow.getSize().x;
+				break;
+
+				case DRAG_DELIMITATOR:
+					mDelimitatorRatio = mousePosition.x / mWindow.getSize().x;
 					mDelimitatorRatio = std::max(std::min(mDelimitatorRatio, 0.9f), 0.f);
 					mMainContainer->setSize(mDelimitatorRatio * tgui::bindWidth(mGui) - 20, tgui::bindHeight(mGui));
+					break;
+
+				case DRAG_POINT:
+					if (dragPointIndex < mPoints.size())
+					{
+						mPoints[dragPointIndex] = convertScreenCoordToGraph(mousePosition);
+					}
+					break;
 				}
 				mSourceDirty = true;
 			}
 			else 
 			{
-				if (isMouseOverDelimitator())
+				bool isMouseOverPoint = false;
+				for (size_t i = 0; i < mPoints.size(); i++)
+				{
+					sf::Vector2f pointOnScreen = convertGraphCoordToScreen(mPoints[i]);
+					if (fabs(pointOnScreen.x - mousePosition.x) + fabs(pointOnScreen.y - mousePosition.y) < 5.5f)
+					{
+						dragPointIndex = i;
+						isMouseOverPoint = true;
+					}
+				}
+
+				if (isMouseOverPoint)
+				{
+					drag = DRAG_POINT;
+				}
+				else if (isMouseOverDelimitator())
+				{
 					drag = DRAG_DELIMITATOR;
-				else if ((float)sf::Mouse::getPosition(mWindow).x > mDelimitatorRatio * mWindow.getSize().x)
+				}
+				else if (mousePosition.x > mDelimitatorRatio * mWindow.getSize().x)
 				{
 					if (isMouseOverXAxis())
 						drag = DRAG_X;
@@ -181,7 +213,7 @@ int Application::main()
 						drag = DRAG_XY;
 				}
 				dragPosition = sf::Vector2f(mGraphRect.left, mGraphRect.top);
-				dragMousePosition = sf::Mouse::getPosition();
+				dragMousePosition = mousePosition;
 				dragGraphRect = mGraphRect;
 			}
 		}
@@ -460,6 +492,16 @@ void Application::showGraph()
 		lines.push_back(sf::Vector2f(mGraphScreen.left + middleX*mGraphScreen.width - graduationSize, mGraphScreen.top + (1.f - y) * mGraphScreen.height));
 	}
 	mWindow.draw(lines.data(), lines.size(), sf::Lines);
+
+	for (const auto& it : mPoints)
+	{
+		sf::CircleShape circle(2.5f);
+		circle.setFillColor(sf::Color::Blue);
+		circle.setOutlineThickness(1.f);
+		circle.setOutlineColor(sf::Color::Cyan);
+		circle.setPosition(convertGraphCoordToScreen(it) - sf::Vector2f(2.5f, 2.5f));
+		mWindow.draw(circle);
+	}
 
 	sf::Vector2f mouse = convertScreenCoordToGraph(sf::Vector2f((float)sf::Mouse::getPosition(mWindow).x, (float)sf::Mouse::getPosition(mWindow).y));
 	
@@ -1044,6 +1086,22 @@ void Application::loadWidgets()
 					it.max = atof(maxEditBox->getText().toAnsiString().c_str());
 					return;
 				}
+			}
+		});
+	}
+
+	// Points
+	{
+		tgui::Button::Ptr createPointButton = tgui::Button::create();
+		createPointButton->setSize(140, 20);
+		createPointButton->setPosition(tgui::bindLeft(mGui.get("TweakableContainer")) - 180, windowHeight - 25);
+		createPointButton->setText("Add point");
+		createPointButton->setTextSize(10);
+		mGui.add(createPointButton);
+		createPointButton->connect("pressed", [this]() {
+			if (mCoordinate == CARTESIAN)
+			{
+				mPoints.push_back(sf::Vector2f(mGraphRect.left + 0.5f * mGraphRect.width, mGraphRect.top + 0.5f * mGraphRect.height));
 			}
 		});
 	}
