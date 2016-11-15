@@ -29,9 +29,9 @@ double PicocEvaluate(Picoc& pc, int paramCount, std::string &errorBuffer)
 	}
     
 	if (paramCount == 1)
-		PicocParse(&pc, "startup", CALL_MAIN_WITH_ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_ARGS_RETURN_DOUBLE), TRUE, TRUE, TRUE);
+		PicocParse(&pc, "startup", CALL_MAIN_WITH_ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_ARGS_RETURN_DOUBLE), TRUE, TRUE, FALSE);
 	else if (paramCount == 2)
-		PicocParse(&pc, "startup", CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE), TRUE, TRUE, TRUE);
+		PicocParse(&pc, "startup", CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE, strlen(CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE), TRUE, TRUE, FALSE);
     
     return pc.PicocExitValue;
 }
