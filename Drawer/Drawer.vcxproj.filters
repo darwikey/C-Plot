@@ -22,6 +22,12 @@
     <Filter Include="Fichiers d%27en-tête\PicoC">
       <UniqueIdentifier>{0041d0a3-63ed-4b1b-899f-ac3fcad16f26}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Fichiers sources\TGUI">
+      <UniqueIdentifier>{dd64f5b9-4913-44e5-8a37-127e8fd00847}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Fichiers d%27en-tête\TGUI">
+      <UniqueIdentifier>{01d871af-e917-4016-9815-542690d401d9}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -96,6 +102,9 @@
     <ClCompile Include="Tweakable.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="SourceTextBox.cpp">
+      <Filter>Fichiers sources\TGUI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Application.h">
@@ -112,6 +121,9 @@
     </ClInclude>
     <ClInclude Include="Tweakable.h">
       <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
+    <ClInclude Include="SourceTextBox.hpp">
+      <Filter>Fichiers d%27en-tête\TGUI</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

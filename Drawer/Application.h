@@ -4,6 +4,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/OpenGL.hpp>
 #include <TGUI/TGUI.hpp>
+#include "SourceTextBox.hpp"
 #include <thread>
 #include <chrono>
 #include <random>
@@ -63,7 +64,7 @@ private:
 	tgui::Gui                 mGui;
 	tgui::VerticalLayout::Ptr mMainContainer;
 	tgui::TextBox::Ptr        mTweakableEditBox;
-	tgui::TextBox::Ptr        mSourceCodeEditBox;
+	tgui::SourceTextBox::Ptr  mSourceCodeEditBox;
 	tgui::Panel::Ptr          mAddTweakableBox;
 	std::thread*              mThread = nullptr;
 	mutable sf::Mutex         mMutex;

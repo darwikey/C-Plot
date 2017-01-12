@@ -680,51 +680,6 @@ void Application::show3DGraph()
 
 void Application::callbackTextEdit()
 {
-	// Auto indentation
-	sf::String str;
-	int indent = 0;
-	for (size_t i = 0; i < mSourceCodeEditBox->getText().getSize(); i++)
-	{
-		sf::Uint32 c = mSourceCodeEditBox->getText()[i];
-		switch (c)
-		{
-		case '{':
-			indent++;
-			str += c;
-			break;
-
-		case '}':
-			indent--;
-			str += c;
-			break;
-
-		case '\n':
-		{
-			str += c;
-
-			bool isEndparentesis = false;
-			for (size_t j = i + 1; j < mSourceCodeEditBox->getText().getSize() && mSourceCodeEditBox->getText()[j] != '\n'; j++)
-			{
-				if (mSourceCodeEditBox->getText()[j] == '}')
-					isEndparentesis = true;
-			}
-
-			for (int i = 0; i < indent - (int)isEndparentesis; i++)
-				str += "    ";
-			for (size_t j = i + 1; j < mSourceCodeEditBox->getText().getSize() && mSourceCodeEditBox->getText()[j] == ' '; i++, j++)
-			{}
-			break;
-		}
-		case '\r':
-			break;
-
-		default:
-			str += c;
-			break;
-		}
-	}
-	mSourceCodeEditBox->setText(str);
-
 	mMutex.lock();
 	mSourceCodeHistory.push_back(mSourceCode);
 	if (mSourceCodeHistory.size() > 50)//limit the size of the history
@@ -914,6 +869,7 @@ void Application::showTweakableSettings(const std::string& currentTweakable)
 
 void Application::loadWidgets()
 {
+	tgui::disableTabKeyUsage();
 	auto windowHeight = tgui::bindHeight(mGui);
 
 	mMainContainer = std::make_shared<tgui::VerticalLayout>();
@@ -928,7 +884,7 @@ void Application::loadWidgets()
 	mGui.add(mTweakableEditBox);
 
 	// Create the source code edit box
-	mSourceCodeEditBox = tgui::TextBox::create();
+	mSourceCodeEditBox = tgui::SourceTextBox::create();
 	mSourceCodeEditBox->setSize(tgui::bindWidth(mMainContainer), windowHeight - 200 - tgui::bindHeight(mTweakableEditBox));
 	mSourceCodeEditBox->setPosition(10, tgui::bindBottom(mTweakableEditBox) + 10);
 	mGui.add(mSourceCodeEditBox, "Code");

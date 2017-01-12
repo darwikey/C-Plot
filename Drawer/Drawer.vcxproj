@@ -156,6 +156,7 @@
     <ClCompile Include="picoc.cpp" />
     <ClCompile Include="platform.cpp" />
     <ClCompile Include="platform_msvc.cpp" />
+    <ClCompile Include="SourceTextBox.cpp" />
     <ClCompile Include="table.cpp" />
     <ClCompile Include="Tweakable.cpp" />
     <ClCompile Include="type.cpp" />
@@ -166,6 +167,7 @@
     <ClInclude Include="interpreter.h" />
     <ClInclude Include="picoc.h" />
     <ClInclude Include="platform.h" />
+    <ClInclude Include="SourceTextBox.hpp" />
     <ClInclude Include="Tweakable.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
