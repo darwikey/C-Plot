@@ -6,10 +6,13 @@
 
 #define PICOC_STACK_SIZE (128*1024)              /* space for the the stack */
 
+extern bool gResetParser;
 
 /* initialise everything */
 void PicocInitialise(Picoc *pc, double* arg, int paramCount, const std::string &SourceCode, std::vector<Tweakable>& tweakables, std::string &errorBuffer)
 {
+	gResetParser = false;
+
 	if (PicocPlatformSetExitPoint(pc))
 	{
 		errorBuffer = pc->ErrorBuffer;

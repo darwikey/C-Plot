@@ -4,6 +4,9 @@
 
 void Application::init()
 {
+	std::random_device rd;
+	mRandomGenerator.seed(rd());
+
 	// Create the window
 	mWindow.create(sf::VideoMode(1000, 700), "C-Plot", 7, sf::ContextSettings(24, 8, 8));
 	mWindow.setFramerateLimit(60);
@@ -346,26 +349,29 @@ bool Application::evaluate2D(std::vector<sf::Vector2f>& result, enumCoordinate c
 	double x;
 	PicocInitialise(&pc, &x, 1, buffer, tweakables, errorBuffer);
 
-	for (int i = 0; i < numPoint; i++)
+	if (errorBuffer.empty())
 	{
-		x = (double)i / numPoint;
-		mProgression = (float)x;
-		if (coordinate == CARTESIAN)
+		for (int i = 0; i < numPoint; i++)
 		{
-			x = x * width + start;
-		}
-		else
-		{
-			x *= 6.283185307179586;
-		}
+			x = (double)i / numPoint;
+			mProgression = (float)x;
+			if (coordinate == CARTESIAN)
+			{
+				x = x * width + start;
+			}
+			else
+			{
+				x *= 6.283185307179586;
+			}
 
-		float y = (float)PicocEvaluate(pc, 1, errorBuffer);
-		if (!errorBuffer.empty())
-		{
-			break;
-		}
+			float y = (float)PicocEvaluate(pc, 1, errorBuffer);
+			if (!errorBuffer.empty())
+			{
+				break;
+			}
 
-		result.push_back(sf::Vector2f((float)x, y));
+			result.push_back(sf::Vector2f((float)x, y));
+		}
 	}
 	PicocCleanup(&pc);
 	mErrorMessage.setString(errorBuffer);

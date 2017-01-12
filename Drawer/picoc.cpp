@@ -11,15 +11,12 @@
 #include <stdio.h>
 #include <string.h>
 
-extern bool gResetParser;
 
 #define CALL_MAIN_WITH_ARGS_RETURN_DOUBLE "__exit_value = main(__arg);"
 #define CALL_MAIN_WITH_2ARGS_RETURN_DOUBLE "__exit_value = main(__arg1, __arg2);"
 
 double PicocEvaluate(Picoc& pc, int paramCount, std::string &errorBuffer)
 {
-	gResetParser = false;
-    
 	if (PicocPlatformSetExitPoint(&pc))
 	{
 		errorBuffer = pc.ErrorBuffer;

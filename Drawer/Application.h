@@ -6,6 +6,7 @@
 #include <TGUI/TGUI.hpp>
 #include <thread>
 #include <chrono>
+#include <random>
 #include "Tweakable.h"
 
 enum enumCoordinate
@@ -57,6 +58,7 @@ private:
 	sf::Color          rainbowColor(float i);
 
 
+	std::mt19937              mRandomGenerator;
 	sf::RenderWindow          mWindow;
 	tgui::Gui                 mGui;
 	tgui::VerticalLayout::Ptr mMainContainer;
