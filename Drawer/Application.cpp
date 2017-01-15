@@ -157,6 +157,8 @@ int Application::main()
 				case DRAG_X:
 				{
 					float center = dragGraphRect.left + 0.5f * dragGraphRect.width;
+					if (convertScreenCoordToGraph(dragMousePosition).x > center)
+						delta = -delta;
 					mGraphRect.width = dragGraphRect.width * pow(2.f, delta.x * 0.01f);
 					mGraphRect.left = center - 0.5f * mGraphRect.width;
 				}
@@ -165,6 +167,8 @@ int Application::main()
 				case DRAG_Y:
 				{
 					float center = dragGraphRect.top + 0.5f * dragGraphRect.height;
+					if (convertScreenCoordToGraph(dragMousePosition).y < center)
+						delta = -delta;
 					mGraphRect.height = dragGraphRect.height * pow(2.f, delta.y * 0.01f);
 					mGraphRect.top = center - 0.5f * mGraphRect.height;
 				}
