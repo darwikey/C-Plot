@@ -19,7 +19,7 @@ void Application::init()
 	glClearDepth(1.f);
 
 	// Disable lighting
-	glDisable(GL_LIGHTING);
+	glEnable(GL_LIGHTING);
 
 	// Setup a perspective projection
 	glMatrixMode(GL_PROJECTION);
@@ -29,8 +29,22 @@ void Application::init()
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_COLOR_ARRAY);
+
+	static sf::Vector3f LightPos(10,0,0);
+	static sf::Vector3f LightDiff = 3.f * sf::Vector3f(1, 1, 1);
+	static sf::Vector3f LightAmbient = 0.f * sf::Vector3f(1, 1, 1);
+	static sf::Vector3f LightSpecular = 1.f * sf::Vector3f(1, 1, 1);
+	glLightfv(GL_LIGHT0, GL_POSITION, &LightPos.x);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, &LightDiff.x);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, &LightAmbient.x);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, &LightSpecular.x);
+	glEnable(GL_LIGHT0);
+
+	glEnable(GL_COLOR_MATERIAL);
+	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+	//glMaterialfv(GL_FRONT, GL_SPECULAR, )
 
 	mGui.setWindow(mWindow);
 
@@ -576,6 +590,7 @@ void Application::show3DGraph()
 
 	std::vector<sf::Vector3f> positions;
 	std::vector<sf::Color> colors;
+	std::vector<sf::Vector3f> vertNormals;
 
 	float minZ = 0, maxZ = 0;
 	for (const sf::Vector3f& p : mPoints3D)
@@ -589,6 +604,26 @@ void Application::show3DGraph()
 	if (maxZ - minZ > 1e-7f)
 		deltaZ = 1.f / (maxZ - minZ);
 
+	std::vector<sf::Vector3f> Normals(mPoints3D.size());
+	for (int x = 0; x < mCurveWidth - 1; x++)
+	{
+		for (int y = 0; y < mCurveWidth - 1; y++)
+		{
+			if (x == 0 || y == 0 || x == mCurveWidth - 2 || y == mCurveWidth - 2)
+			{
+				Normals[x * mCurveWidth + y] = sf::Vector3f(0.f, 0.f, 1.f);
+				continue;
+			}
+
+			sf::Vector3f p0 = mPoints3D[(x - 1) * mCurveWidth + y];
+			sf::Vector3f p1 = mPoints3D[(x + 1) * mCurveWidth + y];
+			sf::Vector3f p2 = mPoints3D[x * mCurveWidth + y - 1];
+			sf::Vector3f p3 = mPoints3D[x * mCurveWidth + y + 1];
+			sf::Vector3f Norm((p1.z - p0.z) * deltaZ, (p3.y - p2.y) * deltaZ, 2.f);
+			Norm *= 1.f / sqrt(Norm.x * Norm.x + Norm.y * Norm.y + Norm.z * Norm.z);
+			Normals[x * mCurveWidth + y] = Norm;
+		}
+	}
 	for (int x = 0; x < mCurveWidth-1; x++)
 	{
 		for (int y = 0; y < mCurveWidth-1; y++)
@@ -616,12 +651,19 @@ void Application::show3DGraph()
 			colors.push_back(c2);
 			colors.push_back(c3);
 			colors.push_back(c0);
+			vertNormals.push_back(Normals[x * mCurveWidth + y]);
+			vertNormals.push_back(Normals[(x + 1) * mCurveWidth + y]);
+			vertNormals.push_back(Normals[(x + 1) * mCurveWidth + y + 1]);
+			vertNormals.push_back(Normals[(x + 1) * mCurveWidth + y + 1]);
+			vertNormals.push_back(Normals[x * mCurveWidth + y + 1]);
+			vertNormals.push_back(Normals[x * mCurveWidth + y]);
 		}
 	}
 	mMutex.unlock();
 
 	glVertexPointer(3, GL_FLOAT, 3 * sizeof(float), positions.data());
 	glColorPointer(4, GL_UNSIGNED_BYTE, 4 * sizeof(unsigned char), colors.data());
+	glNormalPointer(GL_FLOAT, 3 * sizeof(float), vertNormals.data());
 	glDrawArrays(GL_TRIANGLES, 0, positions.size());
 
 	//Axis
