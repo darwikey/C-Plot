@@ -272,6 +272,14 @@ int Application::main()
 		else
 		{
 			showGraph();
+			if (drag == DRAG_POINT && dragPointIndex < mPoints.size())
+			{
+				char str[64];
+				sprintf_s(str, "(%g, %g)", mPoints[dragPointIndex].x, mPoints[dragPointIndex].y);
+				sf::Text text(str, *mGui.getFont(), 12);
+				text.setPosition(mousePosition);
+				mWindow.draw(text);
+			}
 		}
 
 		// Display messages
@@ -540,7 +548,7 @@ void Application::showGraph()
 
 		float y = getAccurateYValue(mouse.x);
 		char str[64];
-		sprintf_s<64>(str, "(%g, %g)", mouse.x, y);
+		sprintf_s(str, "(%g, %g)", mouse.x, y);
 		sf::Text text(str, *mGui.getFont(), 12);
 		sf::Vector2f textPos;
 		if (mCoordinate == CARTESIAN)
