@@ -1108,9 +1108,19 @@ void Application::loadWidgets()
 
 	// Points
 	{
+		tgui::Button::Ptr AdjustTweakableButton = tgui::Button::create();
+		AdjustTweakableButton->setSize(140, 20);
+		AdjustTweakableButton->setPosition(tgui::bindLeft(mGui.get("TweakableContainer")) - 180, windowHeight - 25);
+		AdjustTweakableButton->setText("Adjust tweakable");
+		AdjustTweakableButton->setTextSize(10);
+		mGui.add(AdjustTweakableButton);
+		AdjustTweakableButton->connect("pressed", [this]() {
+			
+		});
+
 		tgui::Button::Ptr createPointButton = tgui::Button::create();
 		createPointButton->setSize(140, 20);
-		createPointButton->setPosition(tgui::bindLeft(mGui.get("TweakableContainer")) - 180, windowHeight - 25);
+		createPointButton->setPosition(tgui::bindPosition(AdjustTweakableButton) - sf::Vector2f(0, 30));
 		createPointButton->setText("Add point");
 		createPointButton->setTextSize(10);
 		mGui.add(createPointButton);
